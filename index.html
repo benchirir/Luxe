@@ -1,142 +1,604 @@
-import { useState, useEffect, useRef } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUXE STORE • Premium Shopping</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            min-height: 100vh;
+        }
+        
+        /* Smooth animations */
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #C9A84C, #FFD700);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-const WHATSAPP = "254792091769";
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-/* ================= PRODUCTS ================= */
-const PRODUCTS = [
-  { id:1, name:"iPhone 14 — Midnight Black", price:85000, cat:"phones", img:"https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=600&q=80", delivery:"Express 24hrs", badge:null },
-  { id:2, name:"Samsung Galaxy A54", price:30999, cat:"phones", img:"https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&q=80", delivery:"Express 24hrs", badge:"16% OFF" },
-  { id:3, name:"AirPods Pro 2", price:16500, cat:"accessories", img:"https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=600&q=80", delivery:"Express 24hrs", badge:"25% OFF" },
-  { id:4, name:"Nike Air Force 1", price:2700, cat:"shoes", img:"https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=600&q=80", delivery:"2–3 days", badge:"22% OFF" },
-  { id:5, name:"Smart Watch Pro", price:2500, cat:"electronics", img:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80", delivery:"Express 24hrs", badge:"37% OFF" }
-];
+        // ==================== COLOR THEME SYSTEM ====================
+        const COLORS = {
+            // Primary Gold Theme
+            primary: '#C9A84C',
+            primaryLight: '#D4B85A',
+            primaryDark: '#B8943E',
+            primaryGradient: 'linear-gradient(135deg, #C9A84C 0%, #E5C76B 50%, #C9A84C 100%)',
+            
+            // Secondary Accents
+            secondary: '#FF6B35',
+            secondaryLight: '#FF8C5A',
+            secondaryDark: '#E55A2B',
+            
+            // Background Colors
+            bgPrimary: '#0A0A0A',
+            bgSecondary: '#111111',
+            bgTertiary: '#1A1A1A',
+            bgCard: '#161616',
+            bgCardHover: '#1E1E1E',
+            
+            // Border Colors
+            border: '#2A2A2A',
+            borderLight: '#3A3A3A',
+            borderGold: '#C9A84C',
+            
+            // Text Colors
+            textPrimary: '#FFFFFF',
+            textSecondary: '#B0B0B0',
+            textMuted: '#888888',
+            textGold: '#C9A84C',
+            
+            // Status Colors
+            success: '#10B981',
+            warning: '#F59E0B',
+            danger: '#EF4444',
+            info: '#3B82F6',
+            
+            // WhatsApp Green
+            whatsapp: '#25D366',
+            whatsappDark: '#128C7E',
+            
+            // Special Effects
+            goldShimmer: 'linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.2), transparent)',
+            glowGold: '0 0 20px rgba(201, 168, 76, 0.3)',
+            glowSuccess: '0 0 15px rgba(37, 211, 102, 0.3)',
+            
+            // Gradients
+            heroGradient: 'linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 50%, #0A0A0A 100%)',
+            cardGradient: 'linear-gradient(180deg, #161616 0%, #111111 100%)',
+            overlayGradient: 'linear-gradient(to top, rgba(10,10,10,0.95) 0%, transparent 100%)'
+        };
 
-/* ================= COMPONENT ================= */
-export default function LuxeStore() {
-  const [cart, setCart] = useState([]);
-  const [search, setSearch] = useState("");
-  const [popup, setPopup] = useState("");
+        const WHATSAPP = "254792091769";
 
-  /* ================= FILTER ================= */
-  const filtered = PRODUCTS.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+        const PRODUCTS = [
+            { id:1, name:"iPhone 14 — Midnight Black", price:85000, cat:"phones", img:"https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=600&q=80", delivery:"Express 24hrs", badge:"HOT", badgeColor:COLORS.danger },
+            { id:2, name:"Samsung Galaxy A54", price:30999, cat:"phones", img:"https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&q=80", delivery:"Express 24hrs", badge:"16% OFF", badgeColor:COLORS.secondary },
+            { id:3, name:"AirPods Pro 2", price:16500, cat:"accessories", img:"https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=600&q=80", delivery:"Express 24hrs", badge:"25% OFF", badgeColor:COLORS.success },
+            { id:4, name:"Nike Air Force 1", price:2700, cat:"shoes", img:"https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=600&q=80", delivery:"2–3 days", badge:"22% OFF", badgeColor:COLORS.info },
+            { id:5, name:"Smart Watch Pro", price:2500, cat:"electronics", img:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80", delivery:"Express 24hrs", badge:"37% OFF", badgeColor:COLORS.warning }
+        ];
 
-  const bestDeals = PRODUCTS.filter(p => p.badge);
+        function LuxeStore() {
+            const [cart, setCart] = useState([]);
+            const [search, setSearch] = useState("");
+            const [popup, setPopup] = useState("");
+            const [hoveredCard, setHoveredCard] = useState(null);
 
-  /* ================= CART ================= */
-  const addToCart = (p) => {
-    setCart(prev => {
-      const ex = prev.find(i => i.id === p.id);
-      return ex ? prev.map(i => i.id === p.id ? {...i, qty:i.qty+1} : i)
-                : [...prev, {...p, qty:1}];
-    });
-    setPopup("Added to cart");
-    setTimeout(()=>setPopup(""),2000);
-  };
+            const filtered = PRODUCTS.filter(p =>
+                p.name.toLowerCase().includes(search.toLowerCase())
+            );
 
-  const cartTotal = cart.reduce((s,i)=>s+i.price*i.qty,0);
+            const bestDeals = PRODUCTS.filter(p => p.badge);
 
-  /* ================= WHATSAPP ================= */
-  const waMsg = () => {
-    if (!cart.length) return `https://wa.me/${WHATSAPP}`;
+            const addToCart = (p) => {
+                setCart(prev => {
+                    const ex = prev.find(i => i.id === p.id);
+                    return ex ? prev.map(i => i.id === p.id ? {...i, qty:i.qty+1} : i)
+                              : [...prev, {...p, qty:1}];
+                });
+                setPopup("✅ Added to cart");
+                setTimeout(() => setPopup(""), 2000);
+            };
 
-    const lines = cart.map(i =>
-      `• ${i.name} x${i.qty} — KSh ${(i.price*i.qty)}`
-    ).join("\n");
+            const cartTotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
+            const cartCount = cart.reduce((s,i) => s + i.qty, 0);
 
-    return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
-`Hello Luxe Store 🛍️
-
-I want to order:
+            const waMsg = () => {
+                if (!cart.length) return `https://wa.me/${WHATSAPP}`;
+                
+                const lines = cart.map(i =>
+                    `• ${i.name} x${i.qty} — KSh ${(i.price*i.qty).toLocaleString()}`
+                ).join("\n");
+                
+                return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
+`🛍️ *LUXE STORE ORDER*
 
 ${lines}
 
-Total: KSh ${cartTotal}
+💰 *Total: KSh ${cartTotal.toLocaleString()}*
 
-I will pay via M-PESA (STK Push).`
-    )}`;
-  };
+📱 I'll pay via M-PESA (STK Push)`
+                )}`;
+            };
 
-  return (
-    <div style={{background:"#0A0A0A", color:"#fff", minHeight:"100vh", padding:"20px"}}>
+            // Styles object using COLORS
+            const styles = {
+                container: {
+                    background: COLORS.heroGradient,
+                    color: COLORS.textPrimary,
+                    minHeight: '100vh',
+                    padding: '20px',
+                    maxWidth: '600px',
+                    margin: '0 auto',
+                    position: 'relative'
+                },
+                header: {
+                    textAlign: 'center',
+                    marginBottom: '30px',
+                    padding: '20px 0',
+                    borderBottom: `2px solid ${COLORS.borderGold}`,
+                    background: `linear-gradient(180deg, transparent 0%, ${COLORS.bgSecondary} 100%)`
+                },
+                title: {
+                    fontSize: '36px',
+                    fontWeight: '800',
+                    background: COLORS.primaryGradient,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    letterSpacing: '3px',
+                    textShadow: COLORS.glowGold,
+                    marginBottom: '8px'
+                },
+                subtitle: {
+                    color: COLORS.textSecondary,
+                    fontSize: '14px',
+                    letterSpacing: '1px'
+                },
+                searchInput: {
+                    padding: '14px 18px',
+                    width: '100%',
+                    marginBottom: '20px',
+                    background: COLORS.bgTertiary,
+                    border: `1px solid ${COLORS.border}`,
+                    color: COLORS.textPrimary,
+                    borderRadius: '50px',
+                    fontSize: '16px',
+                    outline: 'none',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                },
+                trustBadges: {
+                    display: 'flex',
+                    justifyContent: 'space-around',
+                    marginBottom: '30px',
+                    padding: '15px',
+                    background: COLORS.bgSecondary,
+                    borderRadius: '12px',
+                    border: `1px solid ${COLORS.border}`,
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.2)'
+                },
+                badge: {
+                    color: COLORS.primary,
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                },
+                sectionTitle: {
+                    color: COLORS.textPrimary,
+                    marginBottom: '15px',
+                    fontSize: '22px',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                },
+                titleAccent: {
+                    width: '4px',
+                    height: '24px',
+                    background: COLORS.primaryGradient,
+                    borderRadius: '2px'
+                },
+                productGrid: {
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '15px',
+                    marginBottom: '30px'
+                },
+                card: (isHovered) => ({
+                    border: `1px solid ${isHovered ? COLORS.borderGold : COLORS.border}`,
+                    padding: '12px',
+                    borderRadius: '16px',
+                    background: isHovered ? COLORS.bgCardHover : COLORS.bgCard,
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    cursor: 'pointer',
+                    boxShadow: isHovered ? COLORS.glowGold : '0 2px 4px rgba(0,0,0,0.3)',
+                    transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }),
+                productImage: {
+                    width: '100%',
+                    height: '150px',
+                    objectFit: 'cover',
+                    borderRadius: '12px',
+                    marginBottom: '10px'
+                },
+                productName: {
+                    fontWeight: '600',
+                    fontSize: '14px',
+                    marginBottom: '6px',
+                    color: COLORS.textPrimary,
+                    lineHeight: '1.4'
+                },
+                productPrice: {
+                    color: COLORS.primary,
+                    fontWeight: '700',
+                    fontSize: '18px',
+                    marginBottom: '4px'
+                },
+                deliveryText: {
+                    color: COLORS.textMuted,
+                    fontSize: '11px',
+                    marginTop: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                },
+                productBadge: (color) => ({
+                    position: 'absolute',
+                    top: '20px',
+                    right: '20px',
+                    background: color || COLORS.danger,
+                    color: '#fff',
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                    zIndex: 1
+                }),
+                addButton: {
+                    width: '100%',
+                    marginTop: '10px',
+                    padding: '10px',
+                    background: COLORS.primaryGradient,
+                    color: '#000',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 6px rgba(201, 168, 76, 0.2)'
+                },
+                buyNowButton: {
+                    display: 'block',
+                    marginTop: '8px',
+                    padding: '8px',
+                    textAlign: 'center',
+                    color: COLORS.whatsapp,
+                    textDecoration: 'none',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    border: `1px solid ${COLORS.whatsapp}`,
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    background: 'transparent'
+                },
+                cartSummary: {
+                    position: 'sticky',
+                    bottom: '20px',
+                    background: `linear-gradient(135deg, ${COLORS.bgSecondary} 0%, ${COLORS.bgTertiary} 100%)`,
+                    border: `2px solid ${COLORS.borderGold}`,
+                    borderRadius: '16px',
+                    padding: '18px',
+                    marginTop: '20px',
+                    boxShadow: COLORS.glowGold,
+                    backdropFilter: 'blur(10px)'
+                },
+                cartHeader: {
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginBottom: '12px',
+                    fontWeight: '600'
+                },
+                cartCount: {
+                    background: COLORS.primaryGradient,
+                    color: '#000',
+                    padding: '2px 10px',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    fontWeight: '700'
+                },
+                checkoutButton: {
+                    display: 'block',
+                    width: '100%',
+                    padding: '14px',
+                    background: COLORS.whatsapp,
+                    color: '#fff',
+                    textAlign: 'center',
+                    textDecoration: 'none',
+                    borderRadius: '12px',
+                    fontWeight: '700',
+                    fontSize: '16px',
+                    transition: 'all 0.3s ease',
+                    boxShadow: COLORS.glowSuccess,
+                    border: 'none',
+                    cursor: 'pointer'
+                },
+                popup: {
+                    position: 'fixed',
+                    bottom: '20px',
+                    right: '20px',
+                    background: COLORS.primaryGradient,
+                    color: '#000',
+                    padding: '14px 24px',
+                    borderRadius: '12px',
+                    fontWeight: '700',
+                    animation: 'slideIn 0.3s ease',
+                    boxShadow: COLORS.glowGold,
+                    zIndex: 1000
+                },
+                urgencyBadge: {
+                    color: COLORS.warning,
+                    fontSize: '11px',
+                    marginTop: '4px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    animation: 'pulse 2s infinite'
+                }
+            };
 
-      {/* HEADER */}
-      <h1 style={{color:"#C9A84C"}}>LUXE STORE</h1>
+            return (
+                <div style={styles.container}>
+                    
+                    {/* HEADER */}
+                    <div style={styles.header}>
+                        <h1 style={styles.title}>LUXE STORE</h1>
+                        <p style={styles.subtitle}>PREMIUM SHOPPING EXPERIENCE</p>
+                    </div>
 
-      <input
-        placeholder="Search..."
-        value={search}
-        onChange={e=>setSearch(e.target.value)}
-        style={{padding:"10px", width:"100%", marginBottom:"20px"}}
-      />
+                    {/* SEARCH */}
+                    <input
+                        placeholder="🔍 Search products..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        style={styles.searchInput}
+                        onFocus={(e) => {
+                            e.target.style.borderColor = COLORS.primary;
+                            e.target.style.boxShadow = COLORS.glowGold;
+                        }}
+                        onBlur={(e) => {
+                            e.target.style.borderColor = COLORS.border;
+                            e.target.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+                        }}
+                    />
 
-      {/* TRUST */}
-      <p style={{fontSize:"12px", color:"#aaa"}}>
-        ✔ Pay on Delivery (Nairobi) | ✔ M-PESA Accepted | ✔ Trusted Store
-      </p>
+                    {/* TRUST BADGES */}
+                    <div style={styles.trustBadges}>
+                        <span style={styles.badge}>✔ Pay on Delivery</span>
+                        <span style={styles.badge}>📱 M-PESA</span>
+                        <span style={styles.badge}>🚚 24hr Dispatch</span>
+                    </div>
 
-      {/* BEST DEALS */}
-      <h2 style={{color:"#C9A84C"}}>🔥 Best Deals</h2>
-      <div style={{display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:"10px"}}>
-        {bestDeals.map(p=>(
-          <div key={p.id} style={{border:"1px solid #333", padding:"10px"}}>
-            <img src={p.img} style={{width:"100%"}} />
-            <p>{p.name}</p>
-            <p>KSh {p.price}</p>
-            <button onClick={()=>addToCart(p)}>Add to Cart</button>
-          </div>
-        ))}
-      </div>
+                    {/* BEST DEALS */}
+                    {bestDeals.length > 0 && (
+                        <>
+                            <div style={styles.sectionTitle}>
+                                <div style={styles.titleAccent}></div>
+                                🔥 Hot Deals
+                            </div>
+                            <div style={styles.productGrid}>
+                                {bestDeals.map(p => (
+                                    <div 
+                                        key={p.id} 
+                                        style={styles.card(hoveredCard === p.id)}
+                                        onMouseEnter={() => setHoveredCard(p.id)}
+                                        onMouseLeave={() => setHoveredCard(null)}
+                                    >
+                                        {p.badge && (
+                                            <span style={styles.productBadge(p.badgeColor)}>
+                                                {p.badge}
+                                            </span>
+                                        )}
+                                        <img src={p.img} style={styles.productImage} alt={p.name} />
+                                        <div>
+                                            <p style={styles.productName}>{p.name}</p>
+                                            <p style={styles.productPrice}>KSh {p.price.toLocaleString()}</p>
+                                            
+                                            <button 
+                                                onClick={() => addToCart(p)}
+                                                style={styles.addButton}
+                                                onMouseEnter={(e) => {
+                                                    e.target.style.transform = 'scale(1.02)';
+                                                    e.target.style.boxShadow = COLORS.glowGold;
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.target.style.transform = 'scale(1)';
+                                                    e.target.style.boxShadow = '0 4px 6px rgba(201, 168, 76, 0.2)';
+                                                }}
+                                            >
+                                                🛒 Add to Cart
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
 
-      {/* ALL PRODUCTS */}
-      <h2 style={{marginTop:"20px"}}>All Products</h2>
+                    {/* ALL PRODUCTS */}
+                    <div style={styles.sectionTitle}>
+                        <div style={styles.titleAccent}></div>
+                        🛍️ All Products
+                    </div>
+                    <div style={styles.productGrid}>
+                        {filtered.map(p => (
+                            <div 
+                                key={p.id} 
+                                style={styles.card(hoveredCard === p.id)}
+                                onMouseEnter={() => setHoveredCard(p.id)}
+                                onMouseLeave={() => setHoveredCard(null)}
+                            >
+                                {p.badge && (
+                                    <span style={styles.productBadge(p.badgeColor)}>
+                                        {p.badge}
+                                    </span>
+                                )}
+                                <img src={p.img} style={styles.productImage} alt={p.name} />
+                                <div>
+                                    <p style={styles.productName}>{p.name}</p>
+                                    <p style={styles.productPrice}>KSh {p.price.toLocaleString()}</p>
+                                    <p style={styles.deliveryText}>🚚 {p.delivery}</p>
+                                    
+                                    {Math.random() > 0.6 && (
+                                        <p style={styles.urgencyBadge}>
+                                            ⚠️ Only few left
+                                        </p>
+                                    )}
+                                    
+                                    <button 
+                                        onClick={() => addToCart(p)}
+                                        style={styles.addButton}
+                                        onMouseEnter={(e) => {
+                                            e.target.style.transform = 'scale(1.02)';
+                                            e.target.style.boxShadow = COLORS.glowGold;
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.transform = 'scale(1)';
+                                            e.target.style.boxShadow = '0 4px 6px rgba(201, 168, 76, 0.2)';
+                                        }}
+                                    >
+                                        🛒 Add to Cart
+                                    </button>
+                                    
+                                    <a
+                                        href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`⚡ QUICK BUY:\n\n${p.name}\nKSh ${p.price.toLocaleString()}\n\nI want to purchase this item`)}`}
+                                        target="_blank"
+                                        style={styles.buyNowButton}
+                                        onMouseEnter={(e) => {
+                                            e.target.style.background = COLORS.whatsapp;
+                                            e.target.style.color = '#fff';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.background = 'transparent';
+                                            e.target.style.color = COLORS.whatsapp;
+                                        }}
+                                    >
+                                        ⚡ Buy Now
+                                    </a>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
 
-      <div style={{display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:"10px"}}>
-        {filtered.map(p=>(
-          <div key={p.id} style={{border:"1px solid #333", padding:"10px"}}>
+                    {/* CART SUMMARY */}
+                    {cart.length > 0 && (
+                        <div style={styles.cartSummary}>
+                            <div style={styles.cartHeader}>
+                                <span style={{color: COLORS.textPrimary}}>🛒 Your Cart</span>
+                                <span style={styles.cartCount}>{cartCount} items</span>
+                            </div>
+                            <div style={{...styles.cartHeader, marginBottom: '15px'}}>
+                                <span style={{color: COLORS.textSecondary}}>Total:</span>
+                                <span style={{color: COLORS.primary, fontSize: '20px', fontWeight: '800'}}>
+                                    KSh {cartTotal.toLocaleString()}
+                                </span>
+                            </div>
+                            <a
+                                href={waMsg()}
+                                target="_blank"
+                                style={styles.checkoutButton}
+                                onMouseEnter={(e) => {
+                                    e.target.style.background = COLORS.whatsappDark;
+                                    e.target.style.transform = 'scale(1.02)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.background = COLORS.whatsapp;
+                                    e.target.style.transform = 'scale(1)';
+                                }}
+                            >
+                                💬 Checkout via WhatsApp
+                            </a>
+                        </div>
+                    )}
 
-            <img src={p.img} style={{width:"100%"}} />
+                    {/* POPUP NOTIFICATION */}
+                    {popup && (
+                        <div style={styles.popup}>
+                            {popup}
+                        </div>
+                    )}
+                </div>
+            );
+        }
 
-            <p>{p.name}</p>
-            <p>KSh {p.price}</p>
-
-            {/* URGENCY */}
-            {Math.random() > 0.7 && (
-              <p style={{color:"red", fontSize:"12px"}}>⚠ Only few left</p>
-            )}
-
-            <button onClick={()=>addToCart(p)}>Add to Cart</button>
-
-            {/* BUY NOW */}
-            <a
-              href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
-                `BUY NOW:\n${p.name}\nKSh ${p.price}`
-              )}`}
-              target="_blank"
-              style={{display:"block", marginTop:"5px", color:"#25D366"}}
-            >
-              ⚡ Buy Now
-            </a>
-
-          </div>
-        ))}
-      </div>
-
-      {/* CART */}
-      <h2 style={{marginTop:"20px"}}>Cart</h2>
-      <p>Total: KSh {cartTotal}</p>
-
-      <a href={waMsg()} target="_blank" style={{color:"#25D366"}}>
-        Checkout via WhatsApp
-      </a>
-
-      {/* POPUP */}
-      {popup && (
-        <div style={{position:"fixed", bottom:"20px", right:"20px", background:"#C9A84C", padding:"10px"}}>
-          {popup}
-        </div>
-      )}
-    </div>
-  );
-}
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<LuxeStore />);
+    </script>
+</body>
+</html>
