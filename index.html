@@ -2,9 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Luxe Mart">
+    <meta name="application-name" content="Luxe Mart">
+    <meta name="theme-color" content="#0A0A0A">
+    <meta name="description" content="Premium Shopping • Delivery in Minutes">
+    
     <title>LUXE MART • Delivery in Minutes</title>
     
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/869/869636.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://cdn-icons-png.flaticon.com/512/869/869636.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://cdn-icons-png.flaticon.com/512/869/869636.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/869/869636.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="https://cdn-icons-png.flaticon.com/512/869/869636.png">
+    <link rel="shortcut icon" href="https://cdn-icons-png.flaticon.com/512/869/869636.png">
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" id="manifest-placeholder">
+    
+    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -16,18 +39,73 @@
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
-        body { background: #0A0A0A; }
+        
+        html {
+            background: #0A0A0A;
+        }
+        
+        body { 
+            background: #0A0A0A;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        
+        /* PWA Install Prompt Styles */
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #1A1408 0%, #0D0A05 100%);
+            border: 2px solid #C9A84C;
+            border-radius: 20px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 9999;
+            animation: slideUp 0.4s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: #1a1a1a; }
         ::-webkit-scrollbar-thumb { background: #C9A84C; border-radius: 4px; }
+        
+        /* Pull-to-refresh prevention for PWA */
+        body {
+            overscroll-behavior-y: contain;
+        }
+        
+        /* Safe area insets for notched phones */
+        #root {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
         
         .location-dropdown {
             position: relative;
@@ -72,10 +150,250 @@
             color: #10B981;
             margin-left: auto;
         }
+        
+        /* Splash Screen Styles */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #0A0A0A 0%, #1A1408 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
+        }
+        
+        .splash-logo {
+            font-size: 48px;
+            font-weight: 800;
+            color: #C9A84C;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .splash-tagline {
+            color: #888;
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+        
+        .splash-loader {
+            margin-top: 40px;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #3A2A0C;
+            border-top-color: #C9A84C;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-logo">LUXE MART</div>
+        <div class="splash-tagline">PREMIUM DELIVERY</div>
+        <div class="splash-loader"></div>
+    </div>
+    
     <div id="root"></div>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        // Generate manifest dynamically
+        const manifest = {
+            name: "Luxe Mart",
+            short_name: "Luxe Mart",
+            description: "Premium Shopping • Delivery in Minutes",
+            theme_color: "#0A0A0A",
+            background_color: "#0A0A0A",
+            display: "standalone",
+            scope: "/",
+            start_url: "/",
+            orientation: "portrait",
+            icons: [
+                {
+                    src: "https://cdn-icons-png.flaticon.com/512/869/869636.png",
+                    sizes: "192x192",
+                    type: "image/png",
+                    purpose: "any maskable"
+                },
+                {
+                    src: "https://cdn-icons-png.flaticon.com/512/869/869636.png",
+                    sizes: "512x512",
+                    type: "image/png",
+                    purpose: "any maskable"
+                }
+            ],
+            shortcuts: [
+                {
+                    name: "View Cart",
+                    short_name: "Cart",
+                    description: "View your shopping cart",
+                    url: "/?cart=true",
+                    icons: [{ src: "https://cdn-icons-png.flaticon.com/512/869/869636.png", sizes: "192x192" }]
+                }
+            ],
+            categories: ["shopping", "lifestyle", "food"],
+            screenshots: [],
+            related_applications: [],
+            prefer_related_applications: false
+        };
+        
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        document.getElementById('manifest-placeholder').href = manifestURL;
+        
+        // Hide splash screen after content loads
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.style.opacity = '0';
+                    setTimeout(() => splash.style.display = 'none', 500);
+                }
+            }, 1500);
+        });
+        
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function(registration) {
+                        console.log('✅ PWA Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('⚠️ Service Worker registration failed:', error);
+                        // Create inline service worker
+                        createInlineServiceWorker();
+                    });
+            });
+        }
+        
+        function createInlineServiceWorker() {
+            const swContent = `
+                const CACHE_NAME = 'luxe-mart-v1';
+                const urlsToCache = [
+                    '/',
+                    '/index.html'
+                ];
+                
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME)
+                            .then(cache => cache.addAll(urlsToCache))
+                    );
+                });
+                
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then(response => response || fetch(event.request))
+                    );
+                });
+                
+                self.addEventListener('activate', event => {
+                    event.waitUntil(
+                        caches.keys().then(cacheNames => {
+                            return Promise.all(
+                                cacheNames.filter(name => name !== CACHE_NAME)
+                                    .map(name => caches.delete(name))
+                            );
+                        })
+                    );
+                });
+            `;
+            
+            const blob = new Blob([swContent], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl);
+        }
+        
+        // PWA Install Prompt
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install prompt after 3 seconds
+            setTimeout(() => {
+                showInstallPrompt();
+            }, 3000);
+        });
+        
+        function showInstallPrompt() {
+            const promptDiv = document.createElement('div');
+            promptDiv.className = 'install-prompt';
+            promptDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 32px;">📱</span>
+                    <div>
+                        <div style="font-weight: 700; color: #C9A84C; margin-bottom: 4px;">Install Luxe Mart</div>
+                        <div style="font-size: 12px; color: #888;">Get the app for faster shopping</div>
+                    </div>
+                </div>
+                <button onclick="this.parentElement.remove(); window.installApp();" style="
+                    background: #C9A84C;
+                    color: #0A0A0A;
+                    border: none;
+                    padding: 10px 18px;
+                    border-radius: 20px;
+                    font-weight: 700;
+                    font-size: 13px;
+                    cursor: pointer;
+                ">Install</button>
+            `;
+            document.body.appendChild(promptDiv);
+        }
+        
+        window.installApp = function() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('✅ User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        };
+        
+        // Detect if app is already installed
+        if (window.matchMedia('(display-mode: standalone)').matches || 
+            window.navigator.standalone === true) {
+            console.log('📱 Running as installed PWA');
+            document.body.classList.add('pwa-mode');
+        }
+        
+        // Prevent pull-to-refresh
+        document.addEventListener('touchmove', function(e) {
+            if (e.target === document.documentElement) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Handle back button in PWA
+        let backPressCount = 0;
+        window.addEventListener('popstate', function(e) {
+            backPressCount++;
+            if (backPressCount > 1) {
+                if (confirm('Exit Luxe Mart?')) {
+                    window.close();
+                }
+            }
+            setTimeout(() => backPressCount = 0, 500);
+        });
+    </script>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
@@ -142,7 +460,20 @@
             const [hoveredCard, setHoveredCard] = useState(null);
             const [selectedLocation, setSelectedLocation] = useState(LOCATIONS[0]);
             const [showLocationMenu, setShowLocationMenu] = useState(false);
+            const [isOnline, setIsOnline] = useState(navigator.onLine);
             const locationMenuRef = useRef(null);
+
+            // Monitor online/offline status
+            useEffect(() => {
+                const handleOnline = () => setIsOnline(true);
+                const handleOffline = () => setIsOnline(false);
+                window.addEventListener('online', handleOnline);
+                window.addEventListener('offline', handleOffline);
+                return () => {
+                    window.removeEventListener('online', handleOnline);
+                    window.removeEventListener('offline', handleOffline);
+                };
+            }, []);
 
             useEffect(() => {
                 const handleClickOutside = (event) => {
@@ -169,6 +500,9 @@
                 });
                 setPopup(`✅ Added to cart`);
                 setTimeout(() => setPopup(""), 2000);
+                
+                // Vibrate on add to cart (mobile feedback)
+                if (navigator.vibrate) navigator.vibrate(50);
             };
 
             const cartTotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
@@ -200,9 +534,16 @@ ${lines}
             };
 
             const styles = {
-                container: { background: COLORS.bgPrimary, color: COLORS.textPrimary, minHeight: '100vh', maxWidth: '480px', margin: '0 auto', position: 'relative', paddingBottom: cart.length > 0 ? '120px' : '20px' },
-                
-                // HEADER - Much more compact and darker
+                container: { 
+                    background: COLORS.bgPrimary, 
+                    color: COLORS.textPrimary, 
+                    minHeight: '100vh', 
+                    maxWidth: '480px', 
+                    margin: '0 auto', 
+                    position: 'relative', 
+                    paddingBottom: cart.length > 0 ? '120px' : '20px',
+                    paddingTop: 'env(safe-area-inset-top)'
+                },
                 header: { 
                     background: 'linear-gradient(135deg, #1A1408 0%, #0D0A05 100%)', 
                     padding: '12px 16px 16px', 
@@ -240,8 +581,14 @@ ${lines}
                     border: '1px solid rgba(201, 168, 76, 0.2)',
                     transition: 'all 0.2s'
                 },
-                
-                // SEARCH BAR - Smaller and more compact
+                offlineBanner: {
+                    background: '#EF4444',
+                    color: '#fff',
+                    padding: '4px',
+                    textAlign: 'center',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                },
                 searchInput: { 
                     width: '100%', 
                     padding: '10px 14px', 
@@ -253,7 +600,6 @@ ${lines}
                     color: '#fff',
                     transition: 'all 0.2s'
                 },
-                
                 locationBanner: {
                     background: 'rgba(26, 20, 8, 0.8)',
                     margin: '8px 16px',
@@ -264,7 +610,6 @@ ${lines}
                     justifyContent: 'space-between',
                     border: '1px solid rgba(201, 168, 76, 0.2)'
                 },
-                
                 categoriesScroll: { 
                     display: 'flex', 
                     gap: '10px', 
@@ -272,7 +617,8 @@ ${lines}
                     padding: '12px 16px', 
                     marginTop: '-5px', 
                     position: 'relative', 
-                    zIndex: 10 
+                    zIndex: 10,
+                    WebkitOverflowScrolling: 'touch'
                 },
                 categoryChip: (isActive, color) => ({ 
                     display: 'flex', 
@@ -286,7 +632,8 @@ ${lines}
                     cursor: 'pointer', 
                     transition: 'all 0.2s', 
                     minWidth: '70px',
-                    fontSize: '12px'
+                    fontSize: '12px',
+                    WebkitTapHighlightColor: 'transparent'
                 }),
                 categoryIcon: { fontSize: '20px' },
                 categoryName: (isActive) => ({ 
@@ -294,7 +641,6 @@ ${lines}
                     fontWeight: '600', 
                     color: isActive ? '#fff' : '#B0B0B0' 
                 }),
-                
                 section: { padding: '0 16px', marginBottom: '24px' },
                 sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' },
                 sectionTitle: { fontSize: '17px', fontWeight: '700', color: '#C9A84C' },
@@ -307,7 +653,8 @@ ${lines}
                     transition: 'all 0.2s', 
                     cursor: 'pointer', 
                     position: 'relative', 
-                    transform: isHovered ? 'translateY(-2px)' : 'none' 
+                    transform: isHovered ? 'translateY(-2px)' : 'none',
+                    WebkitTapHighlightColor: 'transparent'
                 }),
                 productImage: { width: '100%', height: '120px', objectFit: 'cover', borderRadius: '10px', marginBottom: '8px' },
                 storeName: { fontSize: '10px', color: '#888', marginBottom: '3px' },
@@ -325,7 +672,8 @@ ${lines}
                     fontWeight: '700', 
                     fontSize: '11px', 
                     cursor: 'pointer', 
-                    marginTop: '6px' 
+                    marginTop: '6px',
+                    WebkitTapHighlightColor: 'transparent'
                 },
                 badge: (color) => ({ 
                     position: 'absolute', 
@@ -339,7 +687,6 @@ ${lines}
                     fontWeight: '700', 
                     zIndex: 1 
                 }),
-                
                 cartBar: { 
                     position: 'fixed', 
                     bottom: 0, 
@@ -349,7 +696,8 @@ ${lines}
                     margin: '0 auto', 
                     background: '#1A1408', 
                     borderTop: '2px solid #C9A84C', 
-                    padding: '14px' 
+                    padding: '14px',
+                    paddingBottom: 'calc(14px + env(safe-area-inset-bottom))'
                 },
                 cartPreview: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' },
                 deliveryFeeRow: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#B0B0B0', marginBottom: '6px' },
@@ -365,7 +713,8 @@ ${lines}
                     cursor: 'pointer', 
                     textDecoration: 'none', 
                     display: 'block', 
-                    textAlign: 'center' 
+                    textAlign: 'center',
+                    WebkitTapHighlightColor: 'transparent'
                 },
                 popup: { 
                     position: 'fixed', 
@@ -386,7 +735,12 @@ ${lines}
 
             return (
                 <div style={styles.container}>
-                    {/* COMPACT DARK HEADER */}
+                    {!isOnline && (
+                        <div style={styles.offlineBanner}>
+                            📴 You're offline • Showing cached content
+                        </div>
+                    )}
+                    
                     <div style={styles.header}>
                         <div style={styles.headerTop}>
                             <h1 style={styles.logo}>LUXE MART</h1>
@@ -444,7 +798,6 @@ ${lines}
                         />
                     </div>
 
-                    {/* LOCATION BANNER */}
                     <div style={styles.locationBanner}>
                         <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
                             <span style={{fontSize: '16px'}}>{selectedLocation.icon}</span>
@@ -467,7 +820,6 @@ ${lines}
                         </div>
                     </div>
 
-                    {/* CATEGORIES */}
                     <div style={styles.categoriesScroll}>
                         {CATEGORIES.map(cat => (
                             <div
@@ -481,7 +833,6 @@ ${lines}
                         ))}
                     </div>
 
-                    {/* PRODUCTS */}
                     <div style={styles.section}>
                         <div style={styles.sectionHeader}>
                             <h2 style={styles.sectionTitle}>
@@ -496,9 +847,11 @@ ${lines}
                                     style={styles.productCard(hoveredCard === p.id)}
                                     onMouseEnter={() => setHoveredCard(p.id)}
                                     onMouseLeave={() => setHoveredCard(null)}
+                                    onTouchStart={() => setHoveredCard(p.id)}
+                                    onTouchEnd={() => setHoveredCard(null)}
                                 >
                                     {p.badge && <span style={styles.badge(p.badgeColor)}>{p.badge}</span>}
-                                    <img src={p.img} style={styles.productImage} alt={p.name} />
+                                    <img src={p.img} style={styles.productImage} alt={p.name} loading="lazy" />
                                     <p style={styles.storeName}>{p.store}</p>
                                     <p style={styles.productName}>{p.name}</p>
                                     <div style={styles.rating}><span>⭐</span><span>{p.rating}</span></div>
@@ -510,7 +863,6 @@ ${lines}
                         </div>
                     </div>
 
-                    {/* CART BAR */}
                     {cart.length > 0 && (
                         <div style={styles.cartBar}>
                             <div style={styles.cartPreview}>
@@ -542,4 +894,4 @@ ${lines}
         root.render(<LuxeMart />);
     </script>
 </body>
-    </html>
+</html>
