@@ -1,0 +1,133 @@
+import { useState } from "react"; import { Card, CardContent } from "@/components/ui/card"; import { Button } from "@/components/ui/button"; import { Input } from "@/components/ui/input"; import { Sparkles, RefreshCw, Heart, Image as ImageIcon, Grid3X3, Grid } from "lucide-react"; import { motion } from "framer-motion";
+
+export default function App() { const [loading, setLoading] = useState(false); const [outfit, setOutfit] = useState(null); const [style, setStyle] = useState(""); const [image, setImage] = useState(null); const [saved, setSaved] = useState([]); const [cols, setCols] = useState(3);
+
+const generateOutfit = () => { setLoading(true); setOutfit(null);
+
+setTimeout(() => {
+  const mockOutfit = {
+    title: "AI Styled Look",
+    items: [
+      "Oversized streetwear hoodie",
+      "Cargo pants",
+      "Retro sneakers",
+      "Minimal accessories"
+    ]
+  };
+
+  setOutfit(mockOutfit);
+  setLoading(false);
+}, 1200);
+
+};
+
+const saveOutfit = () => { if (!outfit) return; const newSaved = [...saved, outfit]; setSaved(newSaved); localStorage.setItem("savedOutfits", JSON.stringify(newSaved)); };
+
+const handleImageUpload = (e) => { const file = e.target.files[0]; if (file) { const url = URL.createObjectURL(file); setImage(url); } };
+
+return ( <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black text-white p-6 flex justify-center"> <div className="w-full max-w-2xl space-y-6">
+
+{/* Header */}
+    <div className="text-center space-y-1">
+      <h1 className="text-3xl font-bold">AI Fashion Stylist</h1>
+      <p className="text-zinc-400 text-sm">Now with image-based styling</p>
+    </div>
+
+    {/* Input */}
+    <Card className="bg-zinc-900/60 border-zinc-800">
+      <CardContent className="p-4 space-y-3">
+
+        <Input
+          placeholder="Describe your style (casual, street, formal...)"
+          value={style}
+          onChange={(e) => setStyle(e.target.value)}
+          className="bg-zinc-950 border-zinc-800"
+        />
+
+        {/* Image upload */}
+        <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
+          <ImageIcon size={16} />
+          Upload outfit image
+          <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
+        </label>
+
+        {image && (
+          <img src={image} className="rounded-lg w-full max-h-60 object-cover" />
+        )}
+
+        <Button onClick={generateOutfit} className="w-full bg-white text-black">
+          <Sparkles size={16} /> Generate
+        </Button>
+
+      </CardContent>
+    </Card>
+
+    {/* Loading */}
+    {loading && (
+      <div className="flex items-center justify-center text-zinc-400 gap-2">
+        <RefreshCw className="animate-spin" size={16} />
+        AI is analyzing style...
+      </div>
+    )}
+
+    {/* Result */}
+    {outfit && (
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardContent className="p-4 space-y-3">
+
+          <div className="flex justify-between items-center">
+            <h2 className="font-semibold">✨ {outfit.title}</h2>
+
+            {/* layout toggle */}
+            <div className="flex gap-2">
+              <button onClick={() => setCols(1)}>
+                <Grid size={16} />
+              </button>
+              <button onClick={() => setCols(3)}>
+                <Grid3X3 size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* GRID OUTPUT */}
+          <div
+            className="grid gap-2"
+            style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+          >
+            {outfit.items.map((item, i) => (
+              <div key={i} className="p-2 bg-zinc-800 rounded">
+                {item}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-2 pt-3">
+            <Button onClick={saveOutfit} className="flex-1">
+              <Heart size={16} /> Save
+            </Button>
+
+            <Button onClick={generateOutfit} variant="outline" className="flex-1">
+              Try Again
+            </Button>
+          </div>
+
+        </CardContent>
+      </Card>
+    )}
+
+    {/* Saved (local DB simulation) */}
+    {saved.length > 0 && (
+      <div className="text-sm text-zinc-400">
+        Saved outfits: {saved.length} (stored locally)
+      </div>
+    )}
+
+    {/* PWA hint */}
+    <p className="text-center text-xs text-zinc-600">
+      Installable as app (PWA-ready structure)
+    </p>
+
+  </div>
+</div>
+
+); }
