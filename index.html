@@ -1,12 +1,142 @@
-!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luxe</title>
-</head>
-<body>
-    <h1>Welcome to Luxe!</h1>
-    <p>My website is live.</p>
-</body>
-</html>
+import { useState, useEffect, useRef } from "react";
+
+const WHATSAPP = "254792091769";
+
+/* ================= PRODUCTS ================= */
+const PRODUCTS = [
+  { id:1, name:"iPhone 14 — Midnight Black", price:85000, cat:"phones", img:"https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=600&q=80", delivery:"Express 24hrs", badge:null },
+  { id:2, name:"Samsung Galaxy A54", price:30999, cat:"phones", img:"https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&q=80", delivery:"Express 24hrs", badge:"16% OFF" },
+  { id:3, name:"AirPods Pro 2", price:16500, cat:"accessories", img:"https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=600&q=80", delivery:"Express 24hrs", badge:"25% OFF" },
+  { id:4, name:"Nike Air Force 1", price:2700, cat:"shoes", img:"https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=600&q=80", delivery:"2–3 days", badge:"22% OFF" },
+  { id:5, name:"Smart Watch Pro", price:2500, cat:"electronics", img:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80", delivery:"Express 24hrs", badge:"37% OFF" }
+];
+
+/* ================= COMPONENT ================= */
+export default function LuxeStore() {
+  const [cart, setCart] = useState([]);
+  const [search, setSearch] = useState("");
+  const [popup, setPopup] = useState("");
+
+  /* ================= FILTER ================= */
+  const filtered = PRODUCTS.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const bestDeals = PRODUCTS.filter(p => p.badge);
+
+  /* ================= CART ================= */
+  const addToCart = (p) => {
+    setCart(prev => {
+      const ex = prev.find(i => i.id === p.id);
+      return ex ? prev.map(i => i.id === p.id ? {...i, qty:i.qty+1} : i)
+                : [...prev, {...p, qty:1}];
+    });
+    setPopup("Added to cart");
+    setTimeout(()=>setPopup(""),2000);
+  };
+
+  const cartTotal = cart.reduce((s,i)=>s+i.price*i.qty,0);
+
+  /* ================= WHATSAPP ================= */
+  const waMsg = () => {
+    if (!cart.length) return `https://wa.me/${WHATSAPP}`;
+
+    const lines = cart.map(i =>
+      `• ${i.name} x${i.qty} — KSh ${(i.price*i.qty)}`
+    ).join("\n");
+
+    return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
+`Hello Luxe Store 🛍️
+
+I want to order:
+
+${lines}
+
+Total: KSh ${cartTotal}
+
+I will pay via M-PESA (STK Push).`
+    )}`;
+  };
+
+  return (
+    <div style={{background:"#0A0A0A", color:"#fff", minHeight:"100vh", padding:"20px"}}>
+
+      {/* HEADER */}
+      <h1 style={{color:"#C9A84C"}}>LUXE STORE</h1>
+
+      <input
+        placeholder="Search..."
+        value={search}
+        onChange={e=>setSearch(e.target.value)}
+        style={{padding:"10px", width:"100%", marginBottom:"20px"}}
+      />
+
+      {/* TRUST */}
+      <p style={{fontSize:"12px", color:"#aaa"}}>
+        ✔ Pay on Delivery (Nairobi) | ✔ M-PESA Accepted | ✔ Trusted Store
+      </p>
+
+      {/* BEST DEALS */}
+      <h2 style={{color:"#C9A84C"}}>🔥 Best Deals</h2>
+      <div style={{display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:"10px"}}>
+        {bestDeals.map(p=>(
+          <div key={p.id} style={{border:"1px solid #333", padding:"10px"}}>
+            <img src={p.img} style={{width:"100%"}} />
+            <p>{p.name}</p>
+            <p>KSh {p.price}</p>
+            <button onClick={()=>addToCart(p)}>Add to Cart</button>
+          </div>
+        ))}
+      </div>
+
+      {/* ALL PRODUCTS */}
+      <h2 style={{marginTop:"20px"}}>All Products</h2>
+
+      <div style={{display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:"10px"}}>
+        {filtered.map(p=>(
+          <div key={p.id} style={{border:"1px solid #333", padding:"10px"}}>
+
+            <img src={p.img} style={{width:"100%"}} />
+
+            <p>{p.name}</p>
+            <p>KSh {p.price}</p>
+
+            {/* URGENCY */}
+            {Math.random() > 0.7 && (
+              <p style={{color:"red", fontSize:"12px"}}>⚠ Only few left</p>
+            )}
+
+            <button onClick={()=>addToCart(p)}>Add to Cart</button>
+
+            {/* BUY NOW */}
+            <a
+              href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
+                `BUY NOW:\n${p.name}\nKSh ${p.price}`
+              )}`}
+              target="_blank"
+              style={{display:"block", marginTop:"5px", color:"#25D366"}}
+            >
+              ⚡ Buy Now
+            </a>
+
+          </div>
+        ))}
+      </div>
+
+      {/* CART */}
+      <h2 style={{marginTop:"20px"}}>Cart</h2>
+      <p>Total: KSh {cartTotal}</p>
+
+      <a href={waMsg()} target="_blank" style={{color:"#25D366"}}>
+        Checkout via WhatsApp
+      </a>
+
+      {/* POPUP */}
+      {popup && (
+        <div style={{position:"fixed", bottom:"20px", right:"20px", background:"#C9A84C", padding:"10px"}}>
+          {popup}
+        </div>
+      )}
+    </div>
+  );
+}
