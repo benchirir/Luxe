@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LUXE MART • Delivery in Minutes</title>
     
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -17,33 +16,61 @@
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
-        
-        body {
-            background: #0A0A0A;
-        }
-        
+        body { background: #0A0A0A; }
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #C9A84C; border-radius: 4px; }
         
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
+        .location-dropdown {
+            position: relative;
+            display: inline-block;
         }
-        
-        ::-webkit-scrollbar-track {
-            background: #1a1a1a;
+        .location-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: #1A1A1A;
+            border: 1px solid #C9A84C;
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 180px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            animation: fadeIn 0.2s ease;
+            z-index: 1000;
         }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #C9A84C;
-            border-radius: 4px;
+        .location-option {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .location-option:hover {
+            background: #2A2A2A;
+        }
+        .location-option.selected {
+            background: rgba(201, 168, 76, 0.2);
+            border-left: 3px solid #C9A84C;
+        }
+        .location-option .city {
+            font-weight: 600;
+            color: #fff;
+        }
+        .location-option .delivery-badge {
+            font-size: 11px;
+            color: #10B981;
+            margin-left: auto;
         }
     </style>
 </head>
@@ -51,12 +78,11 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect, useRef } = React;
 
-        // ==================== COLOR SYSTEM ====================
         const COLORS = {
             primary: '#C9A84C',
-            primaryGradient: 'linear-gradient(135deg, #C9A84C 0%, #FFD700 100%)',
+            primaryGradient: 'linear-gradient(135deg, #2A1F0C 0%, #1A1408 100%)',
             bgPrimary: '#0A0A0A',
             bgSecondary: '#111111',
             bgTertiary: '#1A1A1A',
@@ -72,13 +98,16 @@
             purple: '#8B5CF6',
             pink: '#EC4899',
             orange: '#F97316',
-            whatsapp: '#25D366',
-            glowGold: '0 0 20px rgba(201, 168, 76, 0.3)'
+            whatsapp: '#25D366'
         };
 
         const WHATSAPP = "254792091769";
 
-        // ==================== CATEGORIES ====================
+        const LOCATIONS = [
+            { id: 'nairobi', name: 'Nairobi', icon: '🏙️', deliveryTime: '15-30 min', deliveryFee: 150, description: 'CBD, Westlands, Kilimani' },
+            { id: 'eldoret', name: 'Eldoret', icon: '🌾', deliveryTime: '35-50 min', deliveryFee: 250, description: 'Town, Elgon View, Kapsoya' }
+        ];
+
         const CATEGORIES = [
             { id: 'all', name: '🔥 All', icon: '🛍️', color: '#C9A84C' },
             { id: 'phones', name: 'Phones', icon: '📱', color: '#3B82F6' },
@@ -90,156 +119,19 @@
             { id: 'beauty', name: 'Beauty', icon: '💄', color: '#EC4899' }
         ];
 
-        // Helper function to round down to nearest hundred
-        const roundToHundred = (price) => Math.floor(price / 100) * 100;
-
-        // ==================== PRODUCTS WITH ROUNDED PRICES ====================
         const PRODUCTS = [
-            // PHONES (20 products)
-            { id:1, name:"iPhone 15 Pro Max", price:185000, cat:"phones", img:"https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&q=80", delivery:"15-20 min", badge:"NEW", badgeColor:COLORS.info, rating:4.9, store:"iStore" },
-            { id:2, name:"Samsung Galaxy S24 Ultra", price:165000, cat:"phones", img:"https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&q=80", delivery:"20-25 min", badge:"HOT", badgeColor:COLORS.danger, rating:4.8, store:"Samsung" },
-            { id:3, name:"Google Pixel 8 Pro", price:125000, cat:"phones", img:"https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&q=80", delivery:"15-20 min", badge:"-15%", badgeColor:COLORS.success, rating:4.7, store:"Pixel Store" },
-            { id:4, name:"OnePlus 12", price:95000, cat:"phones", img:"https://images.unsplash.com/photo-1678917820864-3c25b26b4dc9?w=600&q=80", delivery:"20-25 min", badge:null, rating:4.6, store:"OnePlus" },
-            { id:5, name:"Nothing Phone 2", price:65000, cat:"phones", img:"https://images.unsplash.com/photo-1684941582290-23fc2a5c26b7?w=600&q=80", delivery:"15-20 min", badge:"-20%", badgeColor:COLORS.warning, rating:4.5, store:"Nothing" },
-            { id:6, name:"Xiaomi 14 Pro", price:85000, cat:"phones", img:"https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80", delivery:"20-25 min", badge:"HOT", badgeColor:COLORS.danger, rating:4.6, store:"Xiaomi" },
-            { id:7, name:"Oppo Find X7", price:75000, cat:"phones", img:"https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=600&q=80", delivery:"15-20 min", badge:"NEW", badgeColor:COLORS.info, rating:4.5, store:"Oppo" },
-            { id:8, name:"Vivo X100 Pro", price:70000, cat:"phones", img:"https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=600&q=80", delivery:"20-25 min", badge:"-10%", badgeColor:COLORS.success, rating:4.4, store:"Vivo" },
-            { id:9, name:"Sony Xperia 1 VI", price:110000, cat:"phones", img:"https://images.unsplash.com/photo-1609081219090-a6d81d3085bf?w=600&q=80", delivery:"15-20 min", badge:"PRO", badgeColor:COLORS.purple, rating:4.7, store:"Sony" },
-            { id:10, name:"Huawei P60 Pro", price:95000, cat:"phones", img:"https://images.unsplash.com/photo-1605236453806-6ff36851218e?w=600&q=80", delivery:"20-25 min", badge:null, rating:4.6, store:"Huawei" },
-            { id:11, name:"iPhone 14", price:95000, cat:"phones", img:"https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=600&q=80", delivery:"15-20 min", badge:"-15%", badgeColor:COLORS.warning, rating:4.8, store:"iStore" },
-            { id:12, name:"Samsung Galaxy Z Fold5", price:225000, cat:"phones", img:"https://images.unsplash.com/photo-1662740231335-28ffe948ba15?w=600&q=80", delivery:"25-30 min", badge:"FOLD", badgeColor:COLORS.purple, rating:4.9, store:"Samsung" },
-            { id:13, name:"Samsung Galaxy Z Flip5", price:145000, cat:"phones", img:"https://images.unsplash.com/photo-1610792516307-ea6acd9b3b7d?w=600&q=80", delivery:"20-25 min", badge:"FLIP", badgeColor:COLORS.pink, rating:4.7, store:"Samsung" },
-            { id:14, name:"iPhone 13", price:75000, cat:"phones", img:"https://images.unsplash.com/photo-1632661674075-9f2f7a3b8a08?w=600&q=80", delivery:"15-20 min", badge:"VALUE", badgeColor:COLORS.success, rating:4.8, store:"iStore" },
-            { id:15, name:"Redmi Note 13 Pro", price:45000, cat:"phones", img:"https://images.unsplash.com/photo-1598965402089-897ce52e8355?w=600&q=80", delivery:"20-25 min", badge:"BESTSELLER", badgeColor:COLORS.primary, rating:4.5, store:"Xiaomi" },
-            { id:16, name:"Tecno Phantom V Fold", price:85000, cat:"phones", img:"https://images.unsplash.com/photo-1580910051074-3eb694886505?w=600&q=80", delivery:"20-25 min", badge:"FOLD", badgeColor:COLORS.purple, rating:4.3, store:"Tecno" },
-            { id:17, name:"Infinix Zero 30", price:35000, cat:"phones", img:"https://images.unsplash.com/photo-1595941069915-4ebc5197a14e?w=600&q=80", delivery:"15-20 min", badge:"-20%", badgeColor:COLORS.warning, rating:4.2, store:"Infinix" },
-            { id:18, name:"Nokia G42 5G", price:25000, cat:"phones", img:"https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&q=80", delivery:"15-20 min", badge:null, rating:4.1, store:"Nokia" },
-            { id:19, name:"Motorola Edge 40", price:55000, cat:"phones", img:"https://images.unsplash.com/photo-1606312154130-ba66d2e0f35d?w=600&q=80", delivery:"20-25 min", badge:"5G", badgeColor:COLORS.info, rating:4.4, store:"Motorola" },
-            { id:20, name:"Asus ROG Phone 7", price:125000, cat:"phones", img:"https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=600&q=80", delivery:"20-25 min", badge:"GAMING", badgeColor:COLORS.danger, rating:4.8, store:"ASUS" },
-
-            // SHOES - ROUNDED TO NEAREST HUNDRED
-            { id:21, name:"Nike Air Jordan 1", price:5900, cat:"shoes", img:"https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=600&q=80", delivery:"25-30 min", badge:"TRENDING", badgeColor:COLORS.purple, rating:4.9, store:"Nike" },
-            { id:22, name:"Adidas Yeezy 350", price:7000, cat:"shoes", img:"https://images.unsplash.com/photo-1607522370275-f14206abe5d3?w=600&q=80", delivery:"20-25 min", badge:"LIMITED", badgeColor:COLORS.danger, rating:4.8, store:"Adidas" },
-            { id:23, name:"New Balance 550", price:4000, cat:"shoes", img:"https://images.unsplash.com/photo-1539185442499-8794736d4572?w=600&q=80", delivery:"15-20 min", badge:"-25%", badgeColor:COLORS.success, rating:4.7, store:"NB" },
-            { id:24, name:"Puma RS-X", price:2700, cat:"shoes", img:"https://images.unsplash.com/photo-1608231387042-66d5c62c2a7a?w=600&q=80", delivery:"20-25 min", badge:null, rating:4.5, store:"Puma" },
-            { id:25, name:"Vans Old Skool", price:2000, cat:"shoes", img:"https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=600&q=80", delivery:"15-20 min", badge:"CLASSIC", badgeColor:COLORS.primary, rating:4.6, store:"Vans" },
-            { id:26, name:"Crocs Classic Clog", price:1400, cat:"shoes", img:"https://images.unsplash.com/photo-1604001307862-2d953b875079?w=600&q=80", delivery:"15-20 min", badge:"-30%", badgeColor:COLORS.warning, rating:4.4, store:"Crocs" },
-            { id:27, name:"Nike Air Max 97", price:7000, cat:"shoes", img:"https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80", delivery:"20-25 min", badge:"ICONIC", badgeColor:COLORS.primary, rating:4.8, store:"Nike" },
-            { id:28, name:"Adidas Ultraboost", price:8000, cat:"shoes", img:"https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=600&q=80", delivery:"20-25 min", badge:"COMFORT", badgeColor:COLORS.success, rating:4.9, store:"Adidas" },
-            { id:29, name:"Converse Chuck Taylor", price:1700, cat:"shoes", img:"https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600&q=80", delivery:"15-20 min", badge:"TIMELESS", badgeColor:COLORS.info, rating:4.7, store:"Converse" },
-            { id:30, name:"Reebok Classic", price:2400, cat:"shoes", img:"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80", delivery:"15-20 min", badge:"-20%", badgeColor:COLORS.success, rating:4.5, store:"Reebok" },
-            { id:31, name:"Under Armour HOVR", price:4600, cat:"shoes", img:"https://images.unsplash.com/photo-1579338559194-a162d19bf842?w=600&q=80", delivery:"20-25 min", badge:"RUNNING", badgeColor:COLORS.orange, rating:4.6, store:"UA" },
-            { id:32, name:"Asics Gel-Kayano", price:5200, cat:"shoes", img:"https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600&q=80", delivery:"20-25 min", badge:"PRO", badgeColor:COLORS.info, rating:4.7, store:"Asics" },
-            { id:33, name:"Fila Disruptor", price:2700, cat:"shoes", img:"https://images.unsplash.com/photo-1543508282-6319a3e2621f?w=600&q=80", delivery:"15-20 min", badge:"CHUNKY", badgeColor:COLORS.pink, rating:4.3, store:"Fila" },
-            { id:34, name:"Skechers D'Lites", price:3000, cat:"shoes", img:"https://images.unsplash.com/photo-1551107696-a3646b3e0a84?w=600&q=80", delivery:"15-20 min", badge:null, rating:4.4, store:"Skechers" },
-            { id:35, name:"Nike Blazer Mid", price:4000, cat:"shoes", img:"https://images.unsplash.com/photo-1597248881519-db089d3744a5?w=600&q=80", delivery:"20-25 min", badge:"VINTAGE", badgeColor:COLORS.primary, rating:4.6, store:"Nike" },
-            { id:36, name:"Jordan 4 Retro", price:11200, cat:"shoes", img:"https://images.unsplash.com/photo-1579065561449-6c1a7a2e5c3b?w=600&q=80", delivery:"25-30 min", badge:"GRAIL", badgeColor:COLORS.danger, rating:4.9, store:"Jordan" },
-            { id:37, name:"Hoka Clifton 9", price:5900, cat:"shoes", img:"https://images.unsplash.com/photo-1603191659812-ee978730392e?w=600&q=80", delivery:"20-25 min", badge:"MAX CUSHION", badgeColor:COLORS.success, rating:4.8, store:"Hoka" },
-            { id:38, name:"On Cloud 5", price:6200, cat:"shoes", img:"https://images.unsplash.com/photo-1562183241-b9372f5e3b2c?w=600&q=80", delivery:"20-25 min", badge:"PREMIUM", badgeColor:COLORS.purple, rating:4.7, store:"On" },
-            { id:39, name:"Timberland 6\" Boot", price:7000, cat:"shoes", img:"https://images.unsplash.com/photo-1638247025967-b4e38f787b76?w=600&q=80", delivery:"25-30 min", badge:"BOOT", badgeColor:COLORS.orange, rating:4.8, store:"Timberland" },
-            { id:40, name:"Dr. Martens 1460", price:5900, cat:"shoes", img:"https://images.unsplash.com/photo-1529810313688-44ea1c2d81d3?w=600&q=80", delivery:"25-30 min", badge:"PUNK", badgeColor:COLORS.danger, rating:4.7, store:"Dr Martens" },
-
-            // ACCESSORIES - ROUNDED TO NEAREST HUNDRED
-            { id:41, name:"AirPods Pro 2", price:10700, cat:"accessories", img:"https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=600&q=80", delivery:"15-20 min", badge:"HOT", badgeColor:COLORS.danger, rating:4.9, store:"iStore" },
-            { id:42, name:"Samsung Galaxy Buds2 Pro", price:8100, cat:"accessories", img:"https://images.unsplash.com/photo-1651008373003-88c7f1e2c7b2?w=600&q=80", delivery:"20-25 min", badge:"-20%", badgeColor:COLORS.success, rating:4.7, store:"Samsung" },
-            { id:43, name:"Apple Watch Series 9", price:27900, cat:"accessories", img:"https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=600&q=80", delivery:"15-20 min", badge:"NEW", badgeColor:COLORS.info, rating:4.8, store:"iStore" },
-            { id:44, name:"JBL Flip 6", price:5300, cat:"accessories", img:"https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&q=80", delivery:"20-25 min", badge:null, rating:4.6, store:"JBL" },
-            { id:45, name:"Anker PowerCore 20000", price:4500, cat:"accessories", img:"https://images.unsplash.com/photo-1609592786912-9d3b4c1f34f1?w=600&q=80", delivery:"15-20 min", badge:"-35%", badgeColor:COLORS.warning, rating:4.8, store:"Anker" },
-            { id:46, name:"Ring Light 18\"", price:3500, cat:"accessories", img:"https://images.unsplash.com/photo-1618510121094-1a44e2f2b0f0?w=600&q=80", delivery:"15-20 min", badge:"CREATOR", badgeColor:COLORS.purple, rating:4.5, store:"Creator Store" },
-            { id:47, name:"Sony WH-1000XM5", price:35000, cat:"accessories", img:"https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=600&q=80", delivery:"20-25 min", badge:"PREMIUM", badgeColor:COLORS.primary, rating:4.9, store:"Sony" },
-            { id:48, name:"Beats Studio Pro", price:13700, cat:"accessories", img:"https://images.unsplash.com/photo-1546435770-ec9f18f0f5b9?w=600&q=80", delivery:"20-25 min", badge:"-15%", badgeColor:COLORS.success, rating:4.7, store:"Beats" },
-            { id:49, name:"Marshall Emberton II", price:7900, cat:"accessories", img:"https://images.unsplash.com/photo-1623775221392-1852c786b7cb?w=600&q=80", delivery:"20-25 min", badge:"RETRO", badgeColor:COLORS.orange, rating:4.8, store:"Marshall" },
-            { id:50, name:"Belkin 3-in-1 Charger", price:5300, cat:"accessories", img:"https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&q=80", delivery:"15-20 min", badge:"MAGSAFE", badgeColor:COLORS.info, rating:4.6, store:"Belkin" },
-            { id:51, name:"Logitech MX Master 3S", price:9500, cat:"accessories", img:"https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=600&q=80", delivery:"20-25 min", badge:"PRO", badgeColor:COLORS.purple, rating:4.8, store:"Logitech" },
-            { id:52, name:"Samsung T7 SSD 1TB", price:12500, cat:"accessories", img:"https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=600&q=80", delivery:"20-25 min", badge:"FAST", badgeColor:COLORS.success, rating:4.7, store:"Samsung" },
-            { id:53, name:"Razer BlackShark V2", price:3600, cat:"accessories", img:"https://images.unsplash.com/photo-1585792180666-f7347c490ee2?w=600&q=80", delivery:"20-25 min", badge:"GAMING", badgeColor:COLORS.danger, rating:4.6, store:"Razer" },
-            { id:54, name:"Elgato Stream Deck", price:7000, cat:"accessories", img:"https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=600&q=80", delivery:"25-30 min", badge:"STREAMER", badgeColor:COLORS.purple, rating:4.8, store:"Elgato" },
-            { id:55, name:"iPad Magic Keyboard", price:15000, cat:"accessories", img:"https://images.unsplash.com/photo-1585790050230-5dd28404ccb0?w=600&q=80", delivery:"20-25 min", badge:"PREMIUM", badgeColor:COLORS.primary, rating:4.7, store:"Apple" },
-            { id:56, name:"Nomad Base Station", price:6200, cat:"accessories", img:"https://images.unsplash.com/photo-1615526675159-e248c3021d3f?w=600&q=80", delivery:"20-25 min", badge:"WIRELESS", badgeColor:COLORS.info, rating:4.5, store:"Nomad" },
-            { id:57, name:"Peak Design Tripod", price:12000, cat:"accessories", img:"https://images.unsplash.com/photo-1542567455-cd733f23fbb1?w=600&q=80", delivery:"25-30 min", badge:"PRO", badgeColor:COLORS.warning, rating:4.9, store:"Peak Design" },
-            { id:58, name:"DJI Osmo Mobile 6", price:5300, cat:"accessories", img:"https://images.unsplash.com/photo-1616353071855-2c8025b3b0d7?w=600&q=80", delivery:"15-20 min", badge:"GIMBAL", badgeColor:COLORS.success, rating:4.7, store:"DJI" },
-
-            // CLOTHES - ROUNDED TO NEAREST HUNDRED
-            { id:59, name:"Nike Tech Fleece", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&q=80", delivery:"20-25 min", badge:"TRENDING", badgeColor:COLORS.purple, rating:4.7, store:"Nike" },
-            { id:60, name:"Essential Hoodie", price:5500, cat:"clothes", img:"https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&q=80", delivery:"15-20 min", badge:"-40%", badgeColor:COLORS.success, rating:4.6, store:"Essentials" },
-            { id:61, name:"Levi's 501 Jeans", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&q=80", delivery:"25-30 min", badge:"CLASSIC", badgeColor:COLORS.primary, rating:4.8, store:"Levi's" },
-            { id:62, name:"Adidas Originals Tee", price:2500, cat:"clothes", img:"https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=600&q=80", delivery:"15-20 min", badge:null, rating:4.5, store:"Adidas" },
-            { id:63, name:"Zara Blazer", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&q=80", delivery:"20-25 min", badge:"PREMIUM", badgeColor:COLORS.primary, rating:4.7, store:"Zara" },
-            { id:64, name:"Uniqlo Heattech", price:3500, cat:"clothes", img:"https://images.unsplash.com/photo-1604695573706-94850661aa65?w=600&q=80", delivery:"15-20 min", badge:"-25%", badgeColor:COLORS.warning, rating:4.6, store:"Uniqlo" },
-            { id:65, name:"North Face Puffer", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1605027990121-cbae9e2422b3?w=600&q=80", delivery:"20-25 min", badge:"WINTER", badgeColor:COLORS.info, rating:4.8, store:"North Face" },
-            { id:66, name:"Patagonia Fleece", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1603741217118-13a56b68d67f?w=600&q=80", delivery:"20-25 min", badge:"ECO", badgeColor:COLORS.success, rating:4.7, store:"Patagonia" },
-            { id:67, name:"Carhartt Beanie", price:2500, cat:"clothes", img:"https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=600&q=80", delivery:"15-20 min", badge:"WARM", badgeColor:COLORS.orange, rating:4.5, store:"Carhartt" },
-            { id:68, name:"Ralph Lauren Polo", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1626497764746-6dc36546b388?w=600&q=80", delivery:"20-25 min", badge:"ICONIC", badgeColor:COLORS.primary, rating:4.8, store:"Ralph Lauren" },
-            { id:69, name:"Tommy Hilfiger Jacket", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&q=80", delivery:"25-30 min", badge:"PREP", badgeColor:COLORS.info, rating:4.6, store:"Tommy Hilfiger" },
-            { id:70, name:"H&M Cargo Pants", price:3500, cat:"clothes", img:"https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&q=80", delivery:"15-20 min", badge:"TREND", badgeColor:COLORS.purple, rating:4.4, store:"H&M" },
-            { id:71, name:"Calvin Klein Boxers", price:4500, cat:"clothes", img:"https://images.unsplash.com/photo-1589310240289-1973e1a1f8a8?w=600&q=80", delivery:"15-20 min", badge:"ESSENTIAL", badgeColor:COLORS.pink, rating:4.7, store:"CK" },
-            { id:72, name:"Lululemon Leggings", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=600&q=80", delivery:"20-25 min", badge:"ATHLEISURE", badgeColor:COLORS.success, rating:4.9, store:"Lululemon" },
-            { id:73, name:"Columbia Rain Jacket", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1599689018356-f30bf35ea6b5?w=600&q=80", delivery:"20-25 min", badge:"WATERPROOF", badgeColor:COLORS.info, rating:4.6, store:"Columbia" },
-            { id:74, name:"Champion Sweatshirt", price:4500, cat:"clothes", img:"https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=600&q=80", delivery:"15-20 min", badge:"-30%", badgeColor:COLORS.warning, rating:4.5, store:"Champion" },
-            { id:75, name:"Stone Island Jacket", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1605908502724-9093b79f1b1c?w=600&q=80", delivery:"25-30 min", badge:"LUXURY", badgeColor:COLORS.danger, rating:4.8, store:"Stone Island" },
-            { id:76, name:"Supreme Box Logo Tee", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1554568218-0f1715e72254?w=600&q=80", delivery:"20-25 min", badge:"HYPE", badgeColor:COLORS.danger, rating:4.7, store:"Supreme" },
-
-            // ELECTRONICS (20 products)
-            { id:77, name:"MacBook Pro M3", price:285000, cat:"electronics", img:"https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&q=80", delivery:"25-30 min", badge:"NEW", badgeColor:COLORS.info, rating:4.9, store:"iStore" },
-            { id:78, name:"iPad Air 5th Gen", price:85000, cat:"electronics", img:"https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&q=80", delivery:"20-25 min", badge:"-15%", badgeColor:COLORS.success, rating:4.8, store:"iStore" },
-            { id:79, name:"Sony PS5 Slim", price:75000, cat:"electronics", img:"https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=600&q=80", delivery:"25-30 min", badge:"HOT", badgeColor:COLORS.danger, rating:4.9, store:"Game Store" },
-            { id:80, name:"Samsung 55\" 4K TV", price:95000, cat:"electronics", img:"https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=600&q=80", delivery:"35-40 min", badge:"-20%", badgeColor:COLORS.warning, rating:4.7, store:"Samsung" },
-            { id:81, name:"DJI Mini 4 Pro", price:65000, cat:"electronics", img:"https://images.unsplash.com/photo-1507582020474-9fe8454c6c30?w=600&q=80", delivery:"20-25 min", badge:"PRO", badgeColor:COLORS.purple, rating:4.8, store:"DJI" },
-            { id:82, name:"Kindle Paperwhite", price:18500, cat:"electronics", img:"https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80", delivery:"15-20 min", badge:"-30%", badgeColor:COLORS.success, rating:4.7, store:"Amazon" },
-            { id:83, name:"GoPro Hero 12", price:55000, cat:"electronics", img:"https://images.unsplash.com/photo-1529612700005-ea2e2c1a5a3c?w=600&q=80", delivery:"20-25 min", badge:"ACTION", badgeColor:COLORS.orange, rating:4.6, store:"GoPro" },
-            { id:84, name:"Dell XPS 15", price:185000, cat:"electronics", img:"https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=600&q=80", delivery:"25-30 min", badge:"POWER", badgeColor:COLORS.info, rating:4.8, store:"Dell" },
-            { id:85, name:"HP Spectre x360", price:165000, cat:"electronics", img:"https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=600&q=80", delivery:"25-30 min", badge:"2-in-1", badgeColor:COLORS.purple, rating:4.7, store:"HP" },
-            { id:86, name:"Lenovo Legion Pro", price:225000, cat:"electronics", img:"https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=600&q=80", delivery:"25-30 min", badge:"GAMING", badgeColor:COLORS.danger, rating:4.9, store:"Lenovo" },
-            { id:87, name:"Microsoft Surface Laptop", price:145000, cat:"electronics", img:"https://images.unsplash.com/photo-1616400619175-5a2e6d4b36b3?w=600&q=80", delivery:"20-25 min", badge:"PREMIUM", badgeColor:COLORS.primary, rating:4.6, store:"Microsoft" },
-            { id:88, name:"Samsung Galaxy Tab S9", price:85000, cat:"electronics", img:"https://images.unsplash.com/photo-1585790050230-5dd28404ccb0?w=600&q=80", delivery:"20-25 min", badge:"ANDROID", badgeColor:COLORS.success, rating:4.7, store:"Samsung" },
-            { id:89, name:"Nintendo Switch OLED", price:45000, cat:"electronics", img:"https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=600&q=80", delivery:"20-25 min", badge:"FUN", badgeColor:COLORS.warning, rating:4.8, store:"Nintendo" },
-            { id:90, name:"Xbox Series X", price:65000, cat:"electronics", img:"https://images.unsplash.com/photo-1621259182978-fbf93132d53d?w=600&q=80", delivery:"25-30 min", badge:"4K", badgeColor:COLORS.success, rating:4.7, store:"Xbox" },
-            { id:91, name:"Samsung Odyssey G9", price:125000, cat:"electronics", img:"https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600&q=80", delivery:"30-35 min", badge:"ULTRAWIDE", badgeColor:COLORS.purple, rating:4.8, store:"Samsung" },
-            { id:92, name:"LG C3 OLED 65\"", price:225000, cat:"electronics", img:"https://images.unsplash.com/photo-1593784991095-a205069470b6?w=600&q=80", delivery:"35-40 min", badge:"OLED", badgeColor:COLORS.danger, rating:4.9, store:"LG" },
-            { id:93, name:"Sonos Arc Soundbar", price:85000, cat:"electronics", img:"https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600&q=80", delivery:"25-30 min", badge:"DOLBY", badgeColor:COLORS.info, rating:4.8, store:"Sonos" },
-            { id:94, name:"Dyson V15 Detect", price:65000, cat:"electronics", img:"https://images.unsplash.com/photo-1558317374-067fb5f30001?w=600&q=80", delivery:"20-25 min", badge:"LASER", badgeColor:COLORS.success, rating:4.7, store:"Dyson" },
-            { id:95, name:"iRobot Roomba j7", price:55000, cat:"electronics", img:"https://images.unsplash.com/photo-1589793907316-f94025b46850?w=600&q=80", delivery:"25-30 min", badge:"SMART", badgeColor:COLORS.purple, rating:4.6, store:"iRobot" },
-            { id:96, name:"Nest Learning Thermostat", price:25000, cat:"electronics", img:"https://images.unsplash.com/photo-1558089687-f282ffcbc0d4?w=600&q=80", delivery:"20-25 min", badge:"ECO", badgeColor:COLORS.success, rating:4.7, store:"Google" },
-
-            // GROCERIES - ROUNDED TO NEAREST HUNDRED
-            { id:97, name:"Cadbury Dairy Milk", price:300, cat:"groceries", img:"https://images.unsplash.com/photo-1581798459013-fa3a6f2e6e4f?w=600&q=80", delivery:"10-15 min", badge:"POPULAR", badgeColor:COLORS.primary, rating:4.8, store:"QuickMart" },
-            { id:98, name:"Nescafe Gold 200g", price:1100, cat:"groceries", img:"https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?w=600&q=80", delivery:"10-15 min", badge:"-20%", badgeColor:COLORS.success, rating:4.6, store:"QuickMart" },
-            { id:99, name:"Nutella 750g", price:900, cat:"groceries", img:"https://images.unsplash.com/photo-1606902965551-dce093cda6e1?w=600&q=80", delivery:"10-15 min", badge:"OFFER", badgeColor:COLORS.warning, rating:4.9, store:"QuickMart" },
-            { id:100, name:"Pringles Original", price:400, cat:"groceries", img:"https://images.unsplash.com/photo-1600952841320-db92ec4047ca?w=600&q=80", delivery:"10-15 min", badge:null, rating:4.7, store:"QuickMart" },
-            { id:101, name:"Coca-Cola 2L", price:200, cat:"groceries", img:"https://images.unsplash.com/photo-1554866585-cd94860890b7?w=600&q=80", delivery:"10-15 min", badge:"COLD", badgeColor:COLORS.info, rating:4.5, store:"QuickMart" },
-            { id:102, name:"Weetabix 24 Pack", price:800, cat:"groceries", img:"https://images.unsplash.com/photo-1567604423725-1f41c8a3c1c5?w=600&q=80", delivery:"10-15 min", badge:"BREAKFAST", badgeColor:COLORS.orange, rating:4.6, store:"QuickMart" },
-            { id:103, name:"Brookside Milk 1L", price:100, cat:"groceries", img:"https://images.unsplash.com/photo-1563636619-e9143da7973b?w=600&q=80", delivery:"10-15 min", badge:"FRESH", badgeColor:COLORS.success, rating:4.8, store:"QuickMart" },
-            { id:104, name:"Blue Band Margarine", price:300, cat:"groceries", img:"https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=600&q=80", delivery:"10-15 min", badge:null, rating:4.5, store:"QuickMart" },
-            { id:105, name:"Ariel Washing Powder", price:400, cat:"groceries", img:"https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=600&q=80", delivery:"10-15 min", badge:"CLEAN", badgeColor:COLORS.info, rating:4.7, store:"QuickMart" },
-            { id:106, name:"Pampers Size 4 (44ct)", price:1700, cat:"groceries", img:"https://images.unsplash.com/photo-1544816157-2ab9b1c4e180?w=600&q=80", delivery:"15-20 min", badge:"BABY", badgeColor:COLORS.pink, rating:4.8, store:"QuickMart" },
-            { id:107, name:"Tusker Lager 6 Pack", price:1100, cat:"groceries", img:"https://images.unsplash.com/photo-1566633806327-68e152aaf26d?w=600&q=80", delivery:"15-20 min", badge:"COLD", badgeColor:COLORS.info, rating:4.6, store:"QuickMart" },
-            { id:108, name:"Java Coffee Beans 250g", price:900, cat:"groceries", img:"https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=600&q=80", delivery:"15-20 min", badge:"KENYAN", badgeColor:COLORS.primary, rating:4.9, store:"Java House" },
-            { id:109, name:"Fresha UHT Milk 1L", price:100, cat:"groceries", img:"https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600&q=80", delivery:"10-15 min", badge:null, rating:4.5, store:"QuickMart" },
-            { id:110, name:"Ketepa Tea Leaves 500g", price:300, cat:"groceries", img:"https://images.unsplash.com/photo-1597481499750-3e6b226c69a9?w=600&q=80", delivery:"10-15 min", badge:"LOCAL", badgeColor:COLORS.success, rating:4.7, store:"QuickMart" },
-            { id:111, name:"Omo Washing Powder 1kg", price:500, cat:"groceries", img:"https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=600&q=80", delivery:"10-15 min", badge:"STAIN", badgeColor:COLORS.warning, rating:4.6, store:"QuickMart" },
-            { id:112, name:"Always Ultra Pads", price:400, cat:"groceries", img:"https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=600&q=80", delivery:"10-15 min", badge:null, rating:4.7, store:"QuickMart" },
-            { id:113, name:"Colgate Toothpaste", price:200, cat:"groceries", img:"https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80", delivery:"10-15 min", badge:"FRESH", badgeColor:COLORS.info, rating:4.6, store:"QuickMart" },
-            { id:114, name:"Geisha Soap 175g", price:100, cat:"groceries", img:"https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80", delivery:"10-15 min", badge:null, rating:4.5, store:"QuickMart" },
-            { id:115, name:"Royco Mchuzi Mix", price:50, cat:"groceries", img:"https://images.unsplash.com/photo-1626804475297-41708f7b4e2a?w=600&q=80", delivery:"10-15 min", badge:"SPICE", badgeColor:COLORS.orange, rating:4.8, store:"QuickMart" },
-            { id:116, name:"Ndengu (Green Grams)", price:100, cat:"groceries", img:"https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=600&q=80", delivery:"10-15 min", badge:"PROTEIN", badgeColor:COLORS.success, rating:4.6, store:"QuickMart" },
-
-            // BEAUTY - ROUNDED TO NEAREST HUNDRED
-            { id:117, name:"Fenty Beauty Foundation", price:4100, cat:"beauty", img:"https://images.unsplash.com/photo-1631214524020-7e18db9a8f92?w=600&q=80", delivery:"15-20 min", badge:"PREMIUM", badgeColor:COLORS.purple, rating:4.8, store:"Sephora" },
-            { id:118, name:"Dior Sauvage 100ml", price:11600, cat:"beauty", img:"https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600&q=80", delivery:"20-25 min", badge:"LUXURY", badgeColor:COLORS.primary, rating:4.9, store:"Sephora" },
-            { id:119, name:"The Ordinary Niacinamide", price:1700, cat:"beauty", img:"https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&q=80", delivery:"15-20 min", badge:"-25%", badgeColor:COLORS.success, rating:4.7, store:"Beauty Bar" },
-            { id:120, name:"MAC Ruby Woo", price:3200, cat:"beauty", img:"https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=600&q=80", delivery:"15-20 min", badge:"ICONIC", badgeColor:COLORS.danger, rating:4.8, store:"MAC" },
-            { id:121, name:"CeraVe Moisturizer", price:2300, cat:"beauty", img:"https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=600&q=80", delivery:"15-20 min", badge:"DERM", badgeColor:COLORS.info, rating:4.9, store:"Beauty Bar" },
-            { id:122, name:"Olaplex No.3", price:4100, cat:"beauty", img:"https://images.unsplash.com/photo-1598452963314-b09f397a5c48?w=600&q=80", delivery:"15-20 min", badge:"HAIR", badgeColor:COLORS.purple, rating:4.8, store:"Sephora" },
-            { id:123, name:"La Roche-Posay SPF50", price:3200, cat:"beauty", img:"https://images.unsplash.com/photo-1621218270181-8ab64292a7d6?w=600&q=80", delivery:"15-20 min", badge:"SUNSCREEN", badgeColor:COLORS.orange, rating:4.7, store:"Beauty Bar" },
-            { id:124, name:"Huda Beauty Palette", price:7900, cat:"beauty", img:"https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&q=80", delivery:"20-25 min", badge:"NAKED", badgeColor:COLORS.pink, rating:4.8, store:"Sephora" },
-            { id:125, name:"Charlotte Tilbury Pillow Talk", price:4100, cat:"beauty", img:"https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=600&q=80", delivery:"15-20 min", badge:"BESTSELLER", badgeColor:COLORS.primary, rating:4.9, store:"Sephora" },
-            { id:126, name:"Kylie Lip Kit", price:3200, cat:"beauty", img:"https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&q=80", delivery:"15-20 min", badge:"MATTE", badgeColor:COLORS.danger, rating:4.6, store:"Kylie Cosmetics" },
-            { id:127, name:"Nivea Body Lotion 400ml", price:700, cat:"beauty", img:"https://images.unsplash.com/photo-1612817288484-6f91600690a4?w=600&q=80", delivery:"10-15 min", badge:"HYDRATE", badgeColor:COLORS.success, rating:4.7, store:"QuickMart" },
-            { id:128, name:"Vaseline Petroleum Jelly", price:300, cat:"beauty", img:"https://images.unsplash.com/photo-1611080621819-48cf3b251bd2?w=600&q=80", delivery:"10-15 min", badge:"CLASSIC", badgeColor:COLORS.primary, rating:4.8, store:"QuickMart" },
-            { id:129, name:"Garnier Micellar Water", price:800, cat:"beauty", img:"https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&q=80", delivery:"15-20 min", badge:"CLEANSE", badgeColor:COLORS.info, rating:4.6, store:"Beauty Bar" },
-            { id:130, name:"Maybelline Lash Sensational", price:1100, cat:"beauty", img:"https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&q=80", delivery:"15-20 min", badge:"VOLUME", badgeColor:COLORS.purple, rating:4.5, store:"Maybelline" },
-            { id:131, name:"Dove Beauty Bar 4 Pack", price:600, cat:"beauty", img:"https://images.unsplash.com/photo-1612817288484-6f91600690a4?w=600&q=80", delivery:"10-15 min", badge:"GENTLE", badgeColor:COLORS.success, rating:4.8, store:"QuickMart" },
-            { id:132, name:"L'Oréal Revitalift Serum", price:3200, cat:"beauty", img:"https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&q=80", delivery:"15-20 min", badge:"ANTI-AGING", badgeColor:COLORS.warning, rating:4.7, store:"L'Oréal" }
+            { id:1, name:"iPhone 15 Pro Max", price:185000, cat:"phones", img:"https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&q=80", delivery:"15-20 min", badge:"NEW", badgeColor:COLORS.info, rating:4.9, store:"iStore" },
+            { id:2, name:"Samsung Galaxy S24 Ultra", price:165000, cat:"phones", img:"https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400&q=80", delivery:"20-25 min", badge:"HOT", badgeColor:COLORS.danger, rating:4.8, store:"Samsung" },
+            { id:3, name:"Google Pixel 8 Pro", price:125000, cat:"phones", img:"https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&q=80", delivery:"15-20 min", badge:"-15%", badgeColor:COLORS.success, rating:4.7, store:"Pixel Store" },
+            { id:4, name:"OnePlus 12", price:95000, cat:"phones", img:"https://images.unsplash.com/photo-1678917820864-3c25b26b4dc9?w=400&q=80", delivery:"20-25 min", badge:null, rating:4.6, store:"OnePlus" },
+            { id:5, name:"Nothing Phone 2", price:65000, cat:"phones", img:"https://images.unsplash.com/photo-1684941582290-23fc2a5c26b7?w=400&q=80", delivery:"15-20 min", badge:"-20%", badgeColor:COLORS.warning, rating:4.5, store:"Nothing" },
+            { id:6, name:"Xiaomi 14 Pro", price:85000, cat:"phones", img:"https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80", delivery:"20-25 min", badge:"HOT", badgeColor:COLORS.danger, rating:4.6, store:"Xiaomi" },
+            { id:21, name:"Nike Air Jordan 1", price:5900, cat:"shoes", img:"https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=400&q=80", delivery:"25-30 min", badge:"TRENDING", badgeColor:COLORS.purple, rating:4.9, store:"Nike" },
+            { id:22, name:"Adidas Yeezy 350", price:7000, cat:"shoes", img:"https://images.unsplash.com/photo-1607522370275-f14206abe5d3?w=400&q=80", delivery:"20-25 min", badge:"LIMITED", badgeColor:COLORS.danger, rating:4.8, store:"Adidas" },
+            { id:41, name:"AirPods Pro 2", price:10700, cat:"accessories", img:"https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=400&q=80", delivery:"15-20 min", badge:"HOT", badgeColor:COLORS.danger, rating:4.9, store:"iStore" },
+            { id:42, name:"Samsung Galaxy Buds2 Pro", price:8100, cat:"accessories", img:"https://images.unsplash.com/photo-1651008373003-88c7f1e2c7b2?w=400&q=80", delivery:"20-25 min", badge:"-20%", badgeColor:COLORS.success, rating:4.7, store:"Samsung" },
+            { id:59, name:"Nike Tech Fleece", price:6500, cat:"clothes", img:"https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400&q=80", delivery:"20-25 min", badge:"TRENDING", badgeColor:COLORS.purple, rating:4.7, store:"Nike" },
+            { id:60, name:"Essential Hoodie", price:5500, cat:"clothes", img:"https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&q=80", delivery:"15-20 min", badge:"-40%", badgeColor:COLORS.success, rating:4.6, store:"Essentials" },
         ];
 
         function LuxeMart() {
@@ -248,6 +140,19 @@
             const [selectedCat, setSelectedCat] = useState('all');
             const [popup, setPopup] = useState("");
             const [hoveredCard, setHoveredCard] = useState(null);
+            const [selectedLocation, setSelectedLocation] = useState(LOCATIONS[0]);
+            const [showLocationMenu, setShowLocationMenu] = useState(false);
+            const locationMenuRef = useRef(null);
+
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (locationMenuRef.current && !locationMenuRef.current.contains(event.target)) {
+                        setShowLocationMenu(false);
+                    }
+                };
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, []);
 
             const filtered = PRODUCTS.filter(p => {
                 const matchesCat = selectedCat === 'all' || p.cat === selectedCat;
@@ -268,70 +173,330 @@
 
             const cartTotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
             const cartCount = cart.reduce((s,i) => s + i.qty, 0);
+            const totalWithDelivery = cartTotal + (cart.length > 0 ? selectedLocation.deliveryFee : 0);
 
             const waMsg = () => {
                 if (!cart.length) return `https://wa.me/${WHATSAPP}`;
                 const lines = cart.map(i => `• ${i.qty}x ${i.name} — KSh ${(i.price*i.qty).toLocaleString()}`).join("\n");
-                return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`🛍️ *LUXE MART ORDER*\n\n${lines}\n\n━━━━━━━━━━━━━━━━\n💰 *Total: KSh ${cartTotal.toLocaleString()}*\n🚚 *Delivery: 15-30 mins*\n💳 *Payment: M-PESA on Delivery*\n\n📍 Please confirm my order`)}`;
+                return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
+`🛍️ *LUXE MART ORDER*
+
+📍 *Location:* ${selectedLocation.name}
+🚚 *Delivery Fee:* KSh ${selectedLocation.deliveryFee}
+
+${lines}
+
+━━━━━━━━━━━━━━━━
+💰 *Subtotal: KSh ${cartTotal.toLocaleString()}*
+🚚 *Delivery: KSh ${selectedLocation.deliveryFee}*
+💳 *TOTAL: KSh ${totalWithDelivery.toLocaleString()}*
+
+⏱️ *Estimated Delivery: ${selectedLocation.deliveryTime}*
+
+💳 *Payment: M-PESA on Delivery*
+
+📍 Please confirm my order`
+                )}`;
             };
 
             const styles = {
-                container: { background: COLORS.bgPrimary, color: COLORS.textPrimary, minHeight: '100vh', maxWidth: '480px', margin: '0 auto', position: 'relative', paddingBottom: cart.length > 0 ? '100px' : '20px' },
-                header: { background: COLORS.primaryGradient, padding: '20px 16px 30px', borderBottomLeftRadius: '24px', borderBottomRightRadius: '24px', position: 'sticky', top: 0, zIndex: 100 },
-                headerTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
-                logo: { fontSize: '24px', fontWeight: '800', color: '#000' },
-                location: { display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '20px', color: '#000', fontSize: '13px', fontWeight: '600' },
-                searchInput: { width: '100%', padding: '14px 18px', background: '#fff', border: 'none', borderRadius: '30px', fontSize: '15px', outline: 'none' },
-                categoriesScroll: { display: 'flex', gap: '12px', overflowX: 'auto', padding: '16px', marginTop: '-20px', position: 'relative', zIndex: 10 },
-                categoryChip: (isActive, color) => ({ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 16px', background: isActive ? color : COLORS.bgSecondary, borderRadius: '16px', border: isActive ? 'none' : `1px solid ${COLORS.border}`, cursor: 'pointer', transition: 'all 0.2s', minWidth: '80px' }),
-                categoryIcon: { fontSize: '24px' },
-                categoryName: (isActive) => ({ fontSize: '12px', fontWeight: '600', color: isActive ? '#fff' : COLORS.textSecondary }),
+                container: { background: COLORS.bgPrimary, color: COLORS.textPrimary, minHeight: '100vh', maxWidth: '480px', margin: '0 auto', position: 'relative', paddingBottom: cart.length > 0 ? '120px' : '20px' },
+                
+                // HEADER - Much more compact and darker
+                header: { 
+                    background: 'linear-gradient(135deg, #1A1408 0%, #0D0A05 100%)', 
+                    padding: '12px 16px 16px', 
+                    borderBottomLeftRadius: '20px', 
+                    borderBottomRightRadius: '20px', 
+                    position: 'sticky', 
+                    top: 0, 
+                    zIndex: 100,
+                    borderBottom: '1px solid #C9A84C'
+                },
+                headerTop: { 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    marginBottom: '12px' 
+                },
+                logo: { 
+                    fontSize: '22px', 
+                    fontWeight: '800', 
+                    color: '#C9A84C',
+                    letterSpacing: '-0.5px',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                },
+                locationBtn: { 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px', 
+                    background: 'rgba(201, 168, 76, 0.12)', 
+                    padding: '6px 12px', 
+                    borderRadius: '20px', 
+                    color: '#C9A84C', 
+                    fontSize: '12px', 
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    border: '1px solid rgba(201, 168, 76, 0.2)',
+                    transition: 'all 0.2s'
+                },
+                
+                // SEARCH BAR - Smaller and more compact
+                searchInput: { 
+                    width: '100%', 
+                    padding: '10px 14px', 
+                    background: '#1A1408', 
+                    border: '1px solid #3A2A0C', 
+                    borderRadius: '25px', 
+                    fontSize: '14px', 
+                    outline: 'none',
+                    color: '#fff',
+                    transition: 'all 0.2s'
+                },
+                
+                locationBanner: {
+                    background: 'rgba(26, 20, 8, 0.8)',
+                    margin: '8px 16px',
+                    padding: '8px 14px',
+                    borderRadius: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    border: '1px solid rgba(201, 168, 76, 0.2)'
+                },
+                
+                categoriesScroll: { 
+                    display: 'flex', 
+                    gap: '10px', 
+                    overflowX: 'auto', 
+                    padding: '12px 16px', 
+                    marginTop: '-5px', 
+                    position: 'relative', 
+                    zIndex: 10 
+                },
+                categoryChip: (isActive, color) => ({ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    gap: '4px', 
+                    padding: '10px 14px', 
+                    background: isActive ? color : '#1A1408', 
+                    borderRadius: '14px', 
+                    border: isActive ? 'none' : `1px solid #3A2A0C`, 
+                    cursor: 'pointer', 
+                    transition: 'all 0.2s', 
+                    minWidth: '70px',
+                    fontSize: '12px'
+                }),
+                categoryIcon: { fontSize: '20px' },
+                categoryName: (isActive) => ({ 
+                    fontSize: '11px', 
+                    fontWeight: '600', 
+                    color: isActive ? '#fff' : '#B0B0B0' 
+                }),
+                
                 section: { padding: '0 16px', marginBottom: '24px' },
                 sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' },
-                sectionTitle: { fontSize: '18px', fontWeight: '700' },
+                sectionTitle: { fontSize: '17px', fontWeight: '700', color: '#C9A84C' },
                 productGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' },
-                productCard: (isHovered) => ({ background: COLORS.bgCard, borderRadius: '16px', padding: '12px', border: `1px solid ${isHovered ? COLORS.primary : COLORS.border}`, transition: 'all 0.2s', cursor: 'pointer', position: 'relative', transform: isHovered ? 'translateY(-2px)' : 'none' }),
-                productImage: { width: '100%', height: '130px', objectFit: 'cover', borderRadius: '12px', marginBottom: '8px' },
-                storeName: { fontSize: '11px', color: COLORS.textMuted, marginBottom: '4px' },
-                productName: { fontSize: '13px', fontWeight: '600', marginBottom: '4px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
-                productPrice: { fontSize: '16px', fontWeight: '700', color: COLORS.primary, marginBottom: '4px' },
-                deliveryRow: { display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: COLORS.success, marginBottom: '8px' },
-                rating: { display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: COLORS.warning },
-                addButton: { width: '100%', padding: '8px', background: COLORS.primaryGradient, color: '#000', border: 'none', borderRadius: '20px', fontWeight: '700', fontSize: '12px', cursor: 'pointer', marginTop: '8px' },
-                badge: (color) => ({ position: 'absolute', top: '20px', left: '20px', background: color || COLORS.danger, color: '#fff', padding: '4px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: '700', zIndex: 1 }),
-                cartBar: { position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: '480px', margin: '0 auto', background: COLORS.bgSecondary, borderTop: `2px solid ${COLORS.primary}`, padding: '16px' },
-                cartPreview: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-                checkoutButton: { width: '100%', padding: '16px', background: COLORS.whatsapp, color: '#fff', border: 'none', borderRadius: '30px', fontWeight: '700', fontSize: '16px', cursor: 'pointer', textDecoration: 'none', display: 'block', textAlign: 'center' },
-                popup: { position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)', background: COLORS.primaryGradient, color: '#000', padding: '12px 24px', borderRadius: '30px', fontWeight: '700', animation: 'slideIn 0.3s ease', zIndex: 1000, whiteSpace: 'nowrap' }
+                productCard: (isHovered) => ({ 
+                    background: '#1A1408', 
+                    borderRadius: '14px', 
+                    padding: '10px', 
+                    border: `1px solid ${isHovered ? '#C9A84C' : '#3A2A0C'}`, 
+                    transition: 'all 0.2s', 
+                    cursor: 'pointer', 
+                    position: 'relative', 
+                    transform: isHovered ? 'translateY(-2px)' : 'none' 
+                }),
+                productImage: { width: '100%', height: '120px', objectFit: 'cover', borderRadius: '10px', marginBottom: '8px' },
+                storeName: { fontSize: '10px', color: '#888', marginBottom: '3px' },
+                productName: { fontSize: '12px', fontWeight: '600', marginBottom: '3px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
+                productPrice: { fontSize: '15px', fontWeight: '700', color: '#C9A84C', marginBottom: '3px' },
+                deliveryRow: { display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#10B981', marginBottom: '6px' },
+                rating: { display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', color: '#F59E0B', marginBottom: '2px' },
+                addButton: { 
+                    width: '100%', 
+                    padding: '7px', 
+                    background: 'linear-gradient(135deg, #C9A84C 0%, #A8883A 100%)', 
+                    color: '#0A0A0A', 
+                    border: 'none', 
+                    borderRadius: '20px', 
+                    fontWeight: '700', 
+                    fontSize: '11px', 
+                    cursor: 'pointer', 
+                    marginTop: '6px' 
+                },
+                badge: (color) => ({ 
+                    position: 'absolute', 
+                    top: '16px', 
+                    left: '16px', 
+                    background: color || '#EF4444', 
+                    color: '#fff', 
+                    padding: '3px 7px', 
+                    borderRadius: '10px', 
+                    fontSize: '9px', 
+                    fontWeight: '700', 
+                    zIndex: 1 
+                }),
+                
+                cartBar: { 
+                    position: 'fixed', 
+                    bottom: 0, 
+                    left: 0, 
+                    right: 0, 
+                    maxWidth: '480px', 
+                    margin: '0 auto', 
+                    background: '#1A1408', 
+                    borderTop: '2px solid #C9A84C', 
+                    padding: '14px' 
+                },
+                cartPreview: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' },
+                deliveryFeeRow: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#B0B0B0', marginBottom: '6px' },
+                checkoutButton: { 
+                    width: '100%', 
+                    padding: '14px', 
+                    background: '#25D366', 
+                    color: '#fff', 
+                    border: 'none', 
+                    borderRadius: '25px', 
+                    fontWeight: '700', 
+                    fontSize: '15px', 
+                    cursor: 'pointer', 
+                    textDecoration: 'none', 
+                    display: 'block', 
+                    textAlign: 'center' 
+                },
+                popup: { 
+                    position: 'fixed', 
+                    bottom: '100px', 
+                    left: '50%', 
+                    transform: 'translateX(-50%)', 
+                    background: 'linear-gradient(135deg, #C9A84C 0%, #A8883A 100%)', 
+                    color: '#0A0A0A', 
+                    padding: '10px 20px', 
+                    borderRadius: '25px', 
+                    fontWeight: '700', 
+                    fontSize: '13px',
+                    animation: 'slideIn 0.3s ease', 
+                    zIndex: 1000, 
+                    whiteSpace: 'nowrap' 
+                }
             };
 
             return (
                 <div style={styles.container}>
+                    {/* COMPACT DARK HEADER */}
                     <div style={styles.header}>
                         <div style={styles.headerTop}>
                             <h1 style={styles.logo}>LUXE MART</h1>
-                            <div style={styles.location}><span>📍</span><span>Nairobi • CBD</span><span>▼</span></div>
+                            
+                            <div style={{position: 'relative'}} ref={locationMenuRef}>
+                                <button 
+                                    style={styles.locationBtn}
+                                    onClick={() => setShowLocationMenu(!showLocationMenu)}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(201, 168, 76, 0.2)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(201, 168, 76, 0.12)'}
+                                >
+                                    <span>{selectedLocation.icon}</span>
+                                    <span>{selectedLocation.name}</span>
+                                    <span style={{fontSize: '9px'}}>▼</span>
+                                </button>
+                                
+                                {showLocationMenu && (
+                                    <div className="location-menu">
+                                        {LOCATIONS.map(loc => (
+                                            <div
+                                                key={loc.id}
+                                                className={`location-option ${selectedLocation.id === loc.id ? 'selected' : ''}`}
+                                                onClick={() => {
+                                                    setSelectedLocation(loc);
+                                                    setShowLocationMenu(false);
+                                                    setPopup(`📍 Delivering to ${loc.name}`);
+                                                    setTimeout(() => setPopup(""), 2000);
+                                                }}
+                                            >
+                                                <span style={{fontSize: '18px'}}>{loc.icon}</span>
+                                                <div>
+                                                    <div className="city">{loc.name}</div>
+                                                    <div style={{fontSize: '10px', color: '#888'}}>{loc.description}</div>
+                                                </div>
+                                                <span className="delivery-badge">{loc.deliveryTime}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <input placeholder="🔍 Search products or stores..." value={search} onChange={e => setSearch(e.target.value)} style={styles.searchInput} />
+                        <input 
+                            placeholder="🔍 Search products or stores..." 
+                            value={search} 
+                            onChange={e => setSearch(e.target.value)} 
+                            style={styles.searchInput}
+                            onFocus={(e) => {
+                                e.target.style.background = '#2A1F0C';
+                                e.target.style.borderColor = '#C9A84C';
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.background = '#1A1408';
+                                e.target.style.borderColor = '#3A2A0C';
+                            }}
+                        />
                     </div>
 
+                    {/* LOCATION BANNER */}
+                    <div style={styles.locationBanner}>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
+                            <span style={{fontSize: '16px'}}>{selectedLocation.icon}</span>
+                            <div>
+                                <div style={{fontWeight: '600', fontSize: '13px', color: '#C9A84C'}}>
+                                    {selectedLocation.name}
+                                </div>
+                                <div style={{fontSize: '10px', color: '#888'}}>
+                                    {selectedLocation.description}
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{textAlign: 'right'}}>
+                            <div style={{fontSize: '12px', fontWeight: '600', color: '#10B981'}}>
+                                🚚 {selectedLocation.deliveryTime}
+                            </div>
+                            <div style={{fontSize: '10px', color: '#888'}}>
+                                Fee: KSh {selectedLocation.deliveryFee}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CATEGORIES */}
                     <div style={styles.categoriesScroll}>
                         {CATEGORIES.map(cat => (
-                            <div key={cat.id} style={styles.categoryChip(selectedCat === cat.id, cat.color)} onClick={() => setSelectedCat(cat.id)}>
+                            <div
+                                key={cat.id}
+                                style={styles.categoryChip(selectedCat === cat.id, cat.color)}
+                                onClick={() => setSelectedCat(cat.id)}
+                            >
                                 <span style={styles.categoryIcon}>{cat.icon}</span>
                                 <span style={styles.categoryName(selectedCat === cat.id)}>{cat.name}</span>
                             </div>
                         ))}
                     </div>
 
+                    {/* PRODUCTS */}
                     <div style={styles.section}>
                         <div style={styles.sectionHeader}>
-                            <h2 style={styles.sectionTitle}>{selectedCat === 'all' ? '🛍️ All Products' : `${CATEGORIES.find(c => c.id === selectedCat)?.icon} ${CATEGORIES.find(c => c.id === selectedCat)?.name}`}</h2>
-                            <span style={{color: COLORS.textMuted}}>{filtered.length} items</span>
+                            <h2 style={styles.sectionTitle}>
+                                {selectedCat === 'all' ? '🛍️ All Products' : `${CATEGORIES.find(c => c.id === selectedCat)?.icon} ${CATEGORIES.find(c => c.id === selectedCat)?.name}`}
+                            </h2>
+                            <span style={{color: '#888', fontSize: '12px'}}>{filtered.length} items</span>
                         </div>
                         <div style={styles.productGrid}>
                             {filtered.map(p => (
-                                <div key={p.id} style={styles.productCard(hoveredCard === p.id)} onMouseEnter={() => setHoveredCard(p.id)} onMouseLeave={() => setHoveredCard(null)}>
+                                <div
+                                    key={p.id}
+                                    style={styles.productCard(hoveredCard === p.id)}
+                                    onMouseEnter={() => setHoveredCard(p.id)}
+                                    onMouseLeave={() => setHoveredCard(null)}
+                                >
                                     {p.badge && <span style={styles.badge(p.badgeColor)}>{p.badge}</span>}
                                     <img src={p.img} style={styles.productImage} alt={p.name} />
                                     <p style={styles.storeName}>{p.store}</p>
@@ -345,13 +510,26 @@
                         </div>
                     </div>
 
+                    {/* CART BAR */}
                     {cart.length > 0 && (
                         <div style={styles.cartBar}>
                             <div style={styles.cartPreview}>
                                 <span>🛒 {cartCount} items</span>
-                                <span style={{color: COLORS.primary, fontWeight: '700'}}>KSh {cartTotal.toLocaleString()}</span>
+                                <span style={{color: '#C9A84C', fontWeight: '700'}}>KSh {cartTotal.toLocaleString()}</span>
                             </div>
-                            <a href={waMsg()} target="_blank" style={styles.checkoutButton}>💬 Checkout via WhatsApp</a>
+                            <div style={styles.deliveryFeeRow}>
+                                <span>🚚 Delivery to {selectedLocation.name}</span>
+                                <span style={{color: '#10B981'}}>KSh {selectedLocation.deliveryFee}</span>
+                            </div>
+                            <div style={{...styles.cartPreview, marginBottom: '12px'}}>
+                                <span style={{fontWeight: '700'}}>Total</span>
+                                <span style={{color: '#C9A84C', fontWeight: '800', fontSize: '17px'}}>
+                                    KSh {totalWithDelivery.toLocaleString()}
+                                </span>
+                            </div>
+                            <a href={waMsg()} target="_blank" style={styles.checkoutButton}>
+                                💬 Checkout via WhatsApp
+                            </a>
                         </div>
                     )}
 
@@ -364,4 +542,4 @@
         root.render(<LuxeMart />);
     </script>
 </body>
-</html>
+    </html>
